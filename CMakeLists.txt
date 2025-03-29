@@ -1,7 +1,9 @@
 cmake_minimum_required(VERSION 3.10)
 
-project(HelloWorld)
+project(BitCoinTrader)
 
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 find_package(fmt CONFIG REQUIRED)
@@ -12,9 +14,9 @@ find_package(glog REQUIRED)
 include_directories(common/include)
 file(GLOB_RECURSE COMMON_SRC_LIST "common/**/*.cpp")
 
-add_executable(HelloWorld main.cpp ${COMMON_SRC_LIST})
+add_executable(BitCoinTrader main.cpp ${COMMON_SRC_LIST})
 
-target_link_libraries(HelloWorld
+target_link_libraries(BitCoinTrader
     PRIVATE
     fmt::fmt
     OpenSSL::SSL
