@@ -66,14 +66,16 @@ asio::awaitable<void> WebSocketDetail<WsSocketType>::close() {
   co_return;
 }
 
-asio::awaitable<int> WebSocketDetailImpl<false>::connect() {
+asio::awaitable<void> WebSocketDetailWS::connect() {
   auto executor = co_await boost::asio::this_coro::executor;
   boost::asio::ip::tcp::resolver resolver(executor);
   auto points = co_await resolver.async_resolve(this->m_host, std::to_string(this->m_port), boost::asio::use_awaitable);
 
   typeof(points.begin()) point_iter;
   if (!points.empty()) {
-    co_return ErrCode_Resolve_Fail;
+    throw boost::beast::system_error(
+        boost::beast::error_code(static_cast<int>(::ERR_get_error()), boost::asio::error::get_ssl_category()),
+        "Unable to get address");
   }
   point_iter = points.begin();
 
@@ -82,10 +84,10 @@ asio::awaitable<int> WebSocketDetailImpl<false>::connect() {
   this->m_ws = std::make_unique<beast::websocket::stream<asio::ip::tcp::socket>>(std::move(socket));
   co_await this->m_ws->async_handshake(this->m_host, this->m_path, boost::asio::use_awaitable);
 
-  co_return ErrCode_OK;
+  co_return;
 }
 
-asio::awaitable<int> WebSocketDetailImpl<true>::connect() {
+asio::awaitable<void> WebSocketDetailWSS::connect() {
   auto executor = co_await boost::asio::this_coro::executor;
   boost::asio::ip::tcp::resolver resolver(executor);
   auto points = co_await resolver.async_resolve(this->m_host, std::to_string(this->m_port), boost::asio::use_awaitable);
@@ -95,7 +97,9 @@ asio::awaitable<int> WebSocketDetailImpl<true>::connect() {
 
   typeof(points.begin()) point_iter;
   if (!points.empty()) {
-    co_return ErrCode_Resolve_Fail;
+    throw boost::beast::system_error(
+      boost::beast::error_code(static_cast<int>(::ERR_get_error()), boost::asio::error::get_ssl_category()),
+      "Unable to get address");
   }
   point_iter = points.begin();
 
@@ -112,7 +116,7 @@ asio::awaitable<int> WebSocketDetailImpl<true>::connect() {
 
   co_await this->m_ws->async_handshake(this->m_host, this->m_path, boost::asio::use_awaitable);
   
-  co_return ErrCode_OK;
+  co_return;
 }
 
 }  // namespace Common

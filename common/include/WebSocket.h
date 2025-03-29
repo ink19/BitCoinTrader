@@ -5,8 +5,8 @@
 #include <boost/asio/awaitable.hpp>
 #include <boost/asio/execution_context.hpp>
 #include <boost/beast.hpp>
-#include <string>
 #include <boost/beast/ssl.hpp>
+#include <string>
 
 namespace Common {
 
@@ -14,16 +14,17 @@ namespace asio = boost::asio;
 namespace beast = boost::beast;
 
 class WebSocket {
-public:
+ public:
   WebSocket();
-  WebSocket(const std::string& uri);
-  int add_uri(const std::string& uri);
+  WebSocket(const std::string &uri);
+  int add_uri(const std::string &uri);
 
-private:
+ private:
   bool m_is_ssl;
   std::string m_host;
   int m_port;
   std::string m_path;
+
 };
 
 template <typename WsSocketType>
@@ -33,7 +34,7 @@ class WebSocketDetail {
       : m_host(host), m_port(port), m_path(path){};
   ~WebSocketDetail() {}
 
-  virtual asio::awaitable<int> connect() { co_return 0; }
+  virtual asio::awaitable<void> connect() { co_return; }
 
   asio::awaitable<std::string> read();
   asio::awaitable<void> write(const std::string &msg);
@@ -46,23 +47,18 @@ class WebSocketDetail {
   std::unique_ptr<WsSocketType> m_ws;
 };
 
-template <bool ssl>
-class WebSocketDetailImpl;
-
-template <>
-class WebSocketDetailImpl<false> : public WebSocketDetail<beast::websocket::stream<asio::ip::tcp::socket>> {
+class WebSocketDetailWS : public WebSocketDetail<beast::websocket::stream<asio::ip::tcp::socket>> {
  public:
-  WebSocketDetailImpl(const std::string &host, int port, const std::string &path)
+  WebSocketDetailWS(const std::string &host, int port, const std::string &path)
       : WebSocketDetail<beast::websocket::stream<asio::ip::tcp::socket>>(host, port, path){};
-  asio::awaitable<int> connect() override;
+  asio::awaitable<void> connect() override;
 };
 
-template <>
-class WebSocketDetailImpl<true> : public WebSocketDetail<beast::websocket::stream<asio::ssl::stream<asio::ip::tcp::socket>>> {
-public:
-  WebSocketDetailImpl(const std::string &host, int port, const std::string &path)
-      : WebSocketDetail<beast::websocket::stream<asio::ssl::stream<asio::ip::tcp::socket>>>(host, port, path) {};
-  asio::awaitable<int> connect() override;
+class WebSocketDetailWSS : public WebSocketDetail<beast::websocket::stream<asio::ssl::stream<asio::ip::tcp::socket>>> {
+ public:
+  WebSocketDetailWSS(const std::string &host, int port, const std::string &path)
+      : WebSocketDetail<beast::websocket::stream<asio::ssl::stream<asio::ip::tcp::socket>>>(host, port, path){};
+  asio::awaitable<void> connect() override;
 };
 
 }  // namespace Common
