@@ -1,0 +1,10 @@
+{
+  "dependencies": [
+    "boost-asio",
+    "boost-beast",
+    "boost-url",
+    "fmt",
+    "openssl",
+    "glog"
+  ]
+}
