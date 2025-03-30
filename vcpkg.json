@@ -2,10 +2,13 @@
   "dependencies": [
     "boost-asio",
     "boost-beast",
+    "boost-json",
+    "boost-system",
     "boost-url",
+    "cryptopp",
     "fmt",
     "glog",
     "openssl",
-    "cryptopp"
+    "boost-program-options"
   ]
 }

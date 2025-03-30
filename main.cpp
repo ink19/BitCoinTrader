@@ -1,41 +1,43 @@
-#include <boost/asio/io_context.hpp>
 #include <fmt/core.h>
-#include <boost/asio.hpp>
 #include <glog/logging.h>
+
+#include <boost/asio.hpp>
+#include <boost/asio/detached.hpp>
+#include <boost/asio/io_context.hpp>
+
 #include "WebSocket.h"
+#include "utils.h"
 #include "websocket_api.h"
+#include "config.h"
+#include "options.h"
 
-int main(int argc, char* argv[])
-{
-    google::InitGoogleLogging(argv[0]);
-    FLAGS_minloglevel = google::INFO;
-    FLAGS_logtostderr = true;
-    
+int main(int argc, char* argv[]) {
+  AppOptions(argc, argv);
 
-    LOG(INFO) << Market::Okx::sha256_hash_base64("Hello, World!");
+  google::InitGoogleLogging(argv[0]);
+  FLAGS_minloglevel = google::INFO;
+  FLAGS_logtostderr = true;
 
-    // boost::asio::io_context io_context;
-    
-    // LOG(INFO) << "Starting WebSocket client";
-    // boost::asio::co_spawn(io_context, []() -> boost::asio::awaitable<void> {
-    //     try {
-    //         Common::WebSocket ws("wss://ws.okx.com:8443/ws/v5/public");
-    //         co_await ws.connect();
-    //         LOG(INFO) << "Connected to WebSocket server";
-    //         co_await ws.write("{\"op\": \"subscribe\", \"args\": [{\"channel\": \"tickers\", \"instId\": \"ETH-USDT\"}]}");
-    //         // co_await ws.write("ping");
-    //         LOG(INFO) << "Subscribed to channel";
+  LOG(INFO) << "CONFIG FILE: " << AppOptions.config_file();
+  AppConfig.init(AppOptions.config_file());
 
-    //         while (true) {
-    //             auto msg = co_await ws.read();
-    //             fmt::print("Received message: {}\n", msg);
-    //         }
-    //     } catch (const std::exception& e) {
-    //         LOG(ERROR) << "Error: " << e.what();
-    //     }
-    // }, boost::asio::detached);
+  Market::Okx::WebSocketApi ws_api(AppConfig.okx()->api_key(), AppConfig.okx()->secret_key(), AppConfig.okx()->passphrase());
+  boost::asio::io_context io_context;
 
-    // io_context.run();
-    // google::ShutdownGoogleLogging();
-    return 0;
+  boost::asio::co_spawn(io_context, [&]() -> boost::asio::awaitable<void> {
+    try {
+      co_await ws_api.login();
+      LOG(INFO) << "Send Login successful";
+
+      boost::asio::co_spawn(io_context, ws_api.exec(), boost::asio::detached);
+    } catch (const std::exception& e) {
+      LOG(ERROR) << "Error: " << e.what();
+    }
+  }, boost::asio::detached);
+
+
+  io_context.run();
+
+  google::ShutdownGoogleLogging();
+  return 0;
 }

@@ -8,12 +8,14 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 find_package(fmt CONFIG REQUIRED)
 find_package(OpenSSL REQUIRED)
-find_package(Boost REQUIRED COMPONENTS asio beast url)
+find_package(Boost REQUIRED COMPONENTS asio beast url json system program_options)
 find_package(glog REQUIRED)
 find_package(cryptopp REQUIRED)
 
 include_directories(common/include)
 include_directories(market/okx)
+include_directories(config)
+
 file(GLOB_RECURSE COMMON_SRC_LIST "common/**/*.cpp")
 file(GLOB_RECURSE OKX_SRC_LIST "market/**/*.cpp")
 
@@ -27,6 +29,9 @@ target_link_libraries(BitCoinTrader
     Boost::asio
     Boost::beast
     Boost::url
+    Boost::json
+    Boost::system
+    Boost::program_options
     glog::glog
     cryptopp::cryptopp
 )
