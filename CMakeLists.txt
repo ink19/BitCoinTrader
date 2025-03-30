@@ -10,11 +10,14 @@ find_package(fmt CONFIG REQUIRED)
 find_package(OpenSSL REQUIRED)
 find_package(Boost REQUIRED COMPONENTS asio beast url)
 find_package(glog REQUIRED)
+find_package(cryptopp REQUIRED)
 
 include_directories(common/include)
+include_directories(market/okx)
 file(GLOB_RECURSE COMMON_SRC_LIST "common/**/*.cpp")
+file(GLOB_RECURSE OKX_SRC_LIST "market/**/*.cpp")
 
-add_executable(BitCoinTrader main.cpp ${COMMON_SRC_LIST})
+add_executable(BitCoinTrader main.cpp ${COMMON_SRC_LIST} ${OKX_SRC_LIST})
 
 target_link_libraries(BitCoinTrader
     PRIVATE
@@ -25,4 +28,5 @@ target_link_libraries(BitCoinTrader
     Boost::beast
     Boost::url
     glog::glog
+    cryptopp::cryptopp
 )
