@@ -35,8 +35,11 @@ int main(int argc, char* argv[]) {
     }
   }, boost::asio::detached);
 
-
-  io_context.run();
+  try {
+    io_context.run();
+  } catch (const std::exception& e) {
+    LOG(ERROR) << "Error: " << e.what();
+  }
 
   google::ShutdownGoogleLogging();
   return 0;

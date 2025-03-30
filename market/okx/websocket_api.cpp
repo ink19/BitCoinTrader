@@ -2,10 +2,11 @@
 #include "utils.h"
 #include <glog/logging.h>
 #include <boost/asio/awaitable.hpp>
+#include <boost/beast/core/error.hpp>
 #include <boost/core/span.hpp>
 #include <memory>
 #include "errcode.h"
-#include "websocket_api_detail.hpp"
+#include "websocket_api_detail.h"
 
 // 构造函数
 Market::Okx::WebSocketApi::WebSocketApi(const std::string& api_key, const std::string& secret_key,
@@ -42,22 +43,31 @@ boost::asio::awaitable<int> Market::Okx::WebSocketApi::login() {
 
   LOG(INFO) << "Login request: " << boost::json::serialize(json_body);
   co_await m_ws_api_detail->write(boost::json::serialize(json_body));
+  
+
 
   co_return ErrCode_OK;
 }
 
-boost::asio::awaitable<std::string> Market::Okx::WebSocketApi::read() {
-  co_return co_await m_ws_api_detail->read();
+boost::asio::awaitable<typename std::shared_ptr<Market::Okx::Detail::ResponeBody>> Market::Okx::WebSocketApi::read() {
+  auto read_data= co_await m_ws_api_detail->read();
+  auto respone_body = std::make_shared<Detail::ResponeBody>(read_data);
+  co_return respone_body;
 }
 
 boost::asio::awaitable<void> Market::Okx::WebSocketApi::exec() {
   for (;;) {
-    auto read_result = co_await read();
-    if (read_result.empty()) {
-      LOG(ERROR) << "Read error";
+    try {
+      auto read_result = co_await read();
+      if (read_result.get() == nullptr) {
+        LOG(ERROR) << "Read error";
+        co_return;
+      }
+      LOG(INFO) << "Received: " << read_result;
+    } catch (const boost::beast::system_error& e) {
+      LOG(ERROR) << "Error: " << e.code() << " msg: " << e.what();
       co_return;
     }
-    LOG(INFO) << "Received: " << read_result;
   }
   co_return;
 } 

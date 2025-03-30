@@ -5,7 +5,7 @@
 #include <boost/json.hpp>
 #include <memory>
 #include <string>
-#include <vector>
+#include <websocket_api_detail.h>
 
 #include "WebSocket.h"
 
@@ -18,7 +18,7 @@ class WebSocketApi {
   WebSocketApi(const std::string& api_key, const std::string& secret_key, const std::string& passphrase);
 
   boost::asio::awaitable<int> login();
-  boost::asio::awaitable<std::string> read();
+  boost::asio::awaitable<typename std::shared_ptr<Market::Okx::Detail::ResponeBody>> read();
   boost::asio::awaitable<void> exec();
 
  private:
