@@ -25,23 +25,45 @@ namespace Common {
 
 WebSocket::WebSocket() {}
 
-WebSocket::WebSocket(const std::string& uri) {
-    this->add_uri(uri);
-}
+WebSocket::WebSocket(const std::string &uri) { this->add_uri(uri); }
 
 int WebSocket::add_uri(const std::string &uri) {
-    auto parsedURI = boost::urls::parse_uri(uri);
-    if (parsedURI.has_error()) {
-        return ErrCode_Invalid_Param;
-    }
+  auto parsedURI = boost::urls::parse_uri(uri);
+  if (parsedURI.has_error()) {
+    return ErrCode_Invalid_Param;
+  }
 
-    if (parsedURI->scheme() == "wss") {
-        m_is_ssl = true;
-    }
-    m_host = parsedURI->host();
-    m_port = parsedURI->port_number();
-    m_path = parsedURI->path();
-    return ErrCode_OK;
+  if (parsedURI->scheme() == "wss") {
+    m_is_ssl = true;
+  }
+  m_host = parsedURI->host();
+  m_port = parsedURI->port_number();
+  m_path = parsedURI->path();
+  return ErrCode_OK;
+}
+
+asio::awaitable<void> WebSocket::connect() {
+  if (m_is_ssl) {
+    m_ws_detail = std::make_unique<WebSocketDetailWSS>(m_host, m_port, m_path);
+  } else {
+    m_ws_detail = std::make_unique<WebSocketDetailWS>(m_host, m_port, m_path);
+  }
+  co_await m_ws_detail->connect();
+  co_return;
+}
+
+asio::awaitable<std::string> WebSocket::read() {
+  co_return co_await m_ws_detail->read();
+}
+
+asio::awaitable<void> WebSocket::write(const std::string &msg) {
+  co_await m_ws_detail->write(msg);
+  co_return;
+}
+
+asio::awaitable<void> WebSocket::close() {
+  co_await m_ws_detail->close();
+  co_return;
 }
 
 template <typename WsSocketType>
@@ -72,7 +94,7 @@ asio::awaitable<void> WebSocketDetailWS::connect() {
   auto points = co_await resolver.async_resolve(this->m_host, std::to_string(this->m_port), boost::asio::use_awaitable);
 
   typeof(points.begin()) point_iter;
-  if (!points.empty()) {
+  if (points.empty()) {
     throw boost::beast::system_error(
         boost::beast::error_code(static_cast<int>(::ERR_get_error()), boost::asio::error::get_ssl_category()),
         "Unable to get address");
@@ -96,10 +118,10 @@ asio::awaitable<void> WebSocketDetailWSS::connect() {
   asio::ssl::stream<asio::ip::tcp::socket> socket(executor, ssl_ctx);
 
   typeof(points.begin()) point_iter;
-  if (!points.empty()) {
+  if (points.empty()) {
     throw boost::beast::system_error(
-      boost::beast::error_code(static_cast<int>(::ERR_get_error()), boost::asio::error::get_ssl_category()),
-      "Unable to get address");
+        boost::beast::error_code(static_cast<int>(::ERR_get_error()), boost::asio::error::get_ssl_category()),
+        "Unable to get address");
   }
   point_iter = points.begin();
 
@@ -115,7 +137,7 @@ asio::awaitable<void> WebSocketDetailWSS::connect() {
   this->m_ws = std::make_unique<beast::websocket::stream<asio::ssl::stream<asio::ip::tcp::socket>>>(std::move(socket));
 
   co_await this->m_ws->async_handshake(this->m_host, this->m_path, boost::asio::use_awaitable);
-  
+
   co_return;
 }
 
