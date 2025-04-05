@@ -5,9 +5,9 @@
 #include <boost/asio/detached.hpp>
 #include <boost/asio/io_context.hpp>
 
-#include "WebSocket.h"
-#include "utils.h"
 #include "websocket_api.h"
+#include "request.h"
+
 #include "config.h"
 #include "options.h"
 
@@ -26,6 +26,12 @@ int main(int argc, char* argv[]) {
 
   boost::asio::co_spawn(io_context, [&]() -> boost::asio::awaitable<void> {
     try {
+      // test for http
+      Common::HttpRequest http_request("http://echo.free.beeceptor.com/", "POST", "Hello world");
+      http_request.set_header("Test", "Test Header");
+      auto respone = co_await http_request.request();
+      LOG(INFO) << "HTTP Response: " << respone;
+
       co_await ws_api.login();
       LOG(INFO) << "Send Login successful";
 

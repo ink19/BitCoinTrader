@@ -12,7 +12,8 @@ find_package(Boost REQUIRED COMPONENTS asio beast url json system program_option
 find_package(glog REQUIRED)
 find_package(cryptopp REQUIRED)
 
-include_directories(common/include)
+include_directories(common/utils/)
+include_directories(common/http)
 include_directories(market/okx)
 include_directories(config)
 

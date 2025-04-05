@@ -15,6 +15,7 @@
 #include <boost/url/parse.hpp>
 
 #include "errcode.h"
+#include "connect.h"
 
 namespace beast = boost::beast;
 namespace http = beast::http;
@@ -89,52 +90,18 @@ asio::awaitable<void> WebSocketDetail<WsSocketType>::close() {
 }
 
 asio::awaitable<void> WebSocketDetailWS::connect() {
-  auto executor = co_await boost::asio::this_coro::executor;
-  boost::asio::ip::tcp::resolver resolver(executor);
-  auto points = co_await resolver.async_resolve(this->m_host, std::to_string(this->m_port), boost::asio::use_awaitable);
+  auto base_socket = co_await Connect(this->m_host, this->m_port)();
 
-  typeof(points.begin()) point_iter;
-  if (points.empty()) {
-    throw boost::beast::system_error(
-        boost::beast::error_code(static_cast<int>(::ERR_get_error()), boost::asio::error::get_ssl_category()),
-        "Unable to get address");
-  }
-  point_iter = points.begin();
-
-  tcp::socket socket(executor);
-  co_await socket.async_connect(*point_iter, boost::asio::use_awaitable);
-  this->m_ws = std::make_unique<beast::websocket::stream<asio::ip::tcp::socket>>(std::move(socket));
+  this->m_ws = std::make_unique<beast::websocket::stream<asio::ip::tcp::socket>>(std::move(*base_socket));
   co_await this->m_ws->async_handshake(this->m_host, this->m_path, boost::asio::use_awaitable);
 
   co_return;
 }
 
 asio::awaitable<void> WebSocketDetailWSS::connect() {
-  auto executor = co_await boost::asio::this_coro::executor;
-  boost::asio::ip::tcp::resolver resolver(executor);
-  auto points = co_await resolver.async_resolve(this->m_host, std::to_string(this->m_port), boost::asio::use_awaitable);
+  auto base_socket = co_await ConnectSSL(this->m_host, this->m_port)();
 
-  asio::ssl::context ssl_ctx(asio::ssl::context::tlsv13);
-  asio::ssl::stream<asio::ip::tcp::socket> socket(executor, ssl_ctx);
-
-  typeof(points.begin()) point_iter;
-  if (points.empty()) {
-    throw boost::beast::system_error(
-        boost::beast::error_code(static_cast<int>(::ERR_get_error()), boost::asio::error::get_ssl_category()),
-        "Unable to get address");
-  }
-  point_iter = points.begin();
-
-  co_await socket.lowest_layer().async_connect(*point_iter, boost::asio::use_awaitable);
-
-  if (!SSL_set_tlsext_host_name(socket.native_handle(), m_host.c_str())) {
-    throw boost::beast::system_error(
-        boost::beast::error_code(static_cast<int>(::ERR_get_error()), boost::asio::error::get_ssl_category()),
-        "Unable to set SNI hostname");
-  }
-  co_await socket.async_handshake(asio::ssl::stream_base::client, boost::asio::use_awaitable);
-
-  this->m_ws = std::make_unique<beast::websocket::stream<asio::ssl::stream<asio::ip::tcp::socket>>>(std::move(socket));
+  this->m_ws = std::make_unique<beast::websocket::stream<asio::ssl::stream<asio::ip::tcp::socket>>>(std::move(*base_socket));
 
   co_await this->m_ws->async_handshake(this->m_host, this->m_path, boost::asio::use_awaitable);
 
