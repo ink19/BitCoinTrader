@@ -8,12 +8,13 @@
 #include <websocket_api_detail.h>
 
 #include "WebSocket.h"
+#include "api.h"
 
 namespace Market {
 
 namespace Okx {
 
-class WebSocketApi {
+class WebSocketApi : private API {
  public:
   WebSocketApi(const std::string& api_key, const std::string& secret_key, const std::string& passphrase);
 
@@ -25,7 +26,6 @@ class WebSocketApi {
   std::string m_api_key;
   std::string m_secret_key;
   std::string m_passphrase;
-  std::string genSingature(const std::string& timestamp, const std::string& method, const std::string& request_path);
   std::unique_ptr<Common::WebSocket> m_ws_api_detail;
 };
 

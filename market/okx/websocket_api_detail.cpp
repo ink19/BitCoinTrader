@@ -3,19 +3,19 @@
 #include <string>
 #include <fmt/core.h>
 
-Market::Okx::Detail::RequestArgsParamLogin::RequestArgsParamLogin(const std::string& api_key, const std::string& passphrase, const std::string& sign,
+Market::Okx::Detail::WsRequestArgsParamLogin::WsRequestArgsParamLogin(const std::string& api_key, const std::string& passphrase, const std::string& sign,
   const std::string& timestamp)
 : m_api_key(api_key), m_passphrase(passphrase), m_sign(sign), m_timestamp(timestamp) {}
 
-boost::json::value Market::Okx::Detail::RequestArgsParamLogin::Json() const {
+boost::json::value Market::Okx::Detail::WsRequestArgsParamLogin::Json() const {
   return {{"apiKey", m_api_key}, {"passphrase", m_passphrase}, {"sign", m_sign}, {"timestamp", m_timestamp}};
 }
 
-Market::Okx::Detail::RequestArgsParamSubscribe::RequestArgsParamSubscribe(const std::string& channel, const std::string& inst_type,
+Market::Okx::Detail::WsRequestArgsParamSubscribe::WsRequestArgsParamSubscribe(const std::string& channel, const std::string& inst_type,
   const std::string& inst_family, const std::string& inst_id)
 : m_channel(channel), m_inst_id(inst_id), m_inst_family(inst_family), m_inst_type(inst_type) {}
 
-boost::json::value Market::Okx::Detail::RequestArgsParamSubscribe::Json() const {
+boost::json::value Market::Okx::Detail::WsRequestArgsParamSubscribe::Json() const {
   boost::json::object arg;
   if (!m_inst_type.empty()) {
     arg["instType"] = m_inst_type;
@@ -36,7 +36,7 @@ boost::json::value Market::Okx::Detail::RequestArgsParamSubscribe::Json() const 
   return arg;
 }
 
-boost::json::value Market::Okx::Detail::RequestBody::Json() const {
+boost::json::value Market::Okx::Detail::WsRequestBody::Json() const {
   boost::json::array args_json;
   for (const auto& arg : m_args) {
     args_json.push_back(arg->Json());
@@ -44,7 +44,7 @@ boost::json::value Market::Okx::Detail::RequestBody::Json() const {
   return {{"op", op_string(m_op)}, {"args", args_json}};
 }
 
-std::string Market::Okx::Detail::RequestBody::op_string(RequestOpEnum op) const {
+std::string Market::Okx::Detail::WsRequestBody::op_string(WsRequestOpEnum op) const {
   switch (op) {
     case OpNONE:
       return "none";
@@ -59,7 +59,7 @@ std::string Market::Okx::Detail::RequestBody::op_string(RequestOpEnum op) const 
   }
 }
 
-Market::Okx::Detail::ResponeEventEnum Market::Okx::Detail::ResponeBody::event_transform(const std::string& event) {
+Market::Okx::Detail::WsResponeEventEnum Market::Okx::Detail::WsResponeBody::event_transform(const std::string& event) {
   if (event == "login") {
     return EventLogin;
   } else if (event == "subscribe") {
@@ -74,10 +74,10 @@ Market::Okx::Detail::ResponeEventEnum Market::Okx::Detail::ResponeBody::event_tr
   return EventNONE;
 }
 
-Market::Okx::Detail::ResponeBody::ResponeBody(const std::string& data) : ResponeBody(boost::json::parse(data)) {}
+Market::Okx::Detail::WsResponeBody::WsResponeBody(const std::string& data) : WsResponeBody(boost::json::parse(data)) {}
 
 
-Market::Okx::Detail::ResponeBody::ResponeBody(const boost::json::value& data) {
+Market::Okx::Detail::WsResponeBody::WsResponeBody(const boost::json::value& data) {
   try {
     if (data.as_object().contains("event")) {
       m_event = event_transform(data.at("event").as_string().c_str());
@@ -90,7 +90,7 @@ Market::Okx::Detail::ResponeBody::ResponeBody(const boost::json::value& data) {
       if (code_str == "0") {
         m_code = CodeOK;
       } else {
-        m_code = static_cast<RespontCodeEnum>(std::stoi(code_str));
+        m_code = static_cast<WsResponeCodeEnum>(std::stoi(code_str));
       }
     } else {
       m_code = CodeOK;
@@ -115,23 +115,23 @@ Market::Okx::Detail::ResponeBody::ResponeBody(const boost::json::value& data) {
   }
 }
 
-void Market::Okx::Detail::ResponeBody::read_args(const boost::json::value& data) {
+void Market::Okx::Detail::WsResponeBody::read_args(const boost::json::value& data) {
   if (data.is_array()) {
     read_args(data);
   }
 
   if (data.is_object()) {
-    auto shared_arg = ResponeArgsParam::Create(m_event, data);
+    auto shared_arg = WsResponeArgsParam::Create(m_event, data);
   }
 }
 
-void Market::Okx::Detail::ResponeBody::read_args(const boost::json::array& data) {
+void Market::Okx::Detail::WsResponeBody::read_args(const boost::json::array& data) {
   for (const auto& item : data) {
     read_args(item);
   }
 }
 
-Market::Okx::Detail::ResponeArgsParamSubscribe::ResponeArgsParamSubscribe(const boost::json::value& data) : ResponeArgsParam(EventSubscribe) {
+Market::Okx::Detail::WsResponeArgsParamSubscribe::WsResponeArgsParamSubscribe(const boost::json::value& data) : WsResponeArgsParam(EventSubscribe) {
   std::string channel, inst_id, inst_type, inst_family;
 
   if (data.as_object().contains("channel")) {
@@ -164,18 +164,18 @@ Market::Okx::Detail::ResponeArgsParamSubscribe::ResponeArgsParamSubscribe(const 
   m_inst_family = inst_family;
 }
 
-std::shared_ptr<Market::Okx::Detail::ResponeArgsParam> Market::Okx::Detail::ResponeArgsParam::Create(ResponeEventEnum event, const boost::json::value& data) {
+std::shared_ptr<Market::Okx::Detail::WsResponeArgsParam> Market::Okx::Detail::WsResponeArgsParam::Create(WsResponeEventEnum event, const boost::json::value& data) {
   switch (event) {
     case EventSubscribe:
-      return std::make_shared<ResponeArgsParamSubscribe>(data);
+      return std::make_shared<WsResponeArgsParamSubscribe>(data);
     case EventUnSubscribe:
-      return std::make_shared<ResponeArgsParamSubscribe>(event);
+      return std::make_shared<WsResponeArgsParamSubscribe>(event);
     default:
       return nullptr;
   }
 }
 
-std::string Market::Okx::Detail::ResponeBody::string() const {
+std::string Market::Okx::Detail::WsResponeBody::string() const {
   auto result = fmt::format("Event: {}, Code: {}, Msg: {}, ConnId: {}", int(m_event), int(m_code), m_msg, m_conn_id);
   return result;
 }

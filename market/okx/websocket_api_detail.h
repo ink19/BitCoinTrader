@@ -13,14 +13,14 @@ namespace Okx {
 
 namespace Detail {
 
-class RequestArgsParam {
+class WsRequestArgsParam {
  public:
   virtual boost::json::value Json() const = 0;
 };
 
-class RequestArgsParamLogin : public RequestArgsParam {
+class WsRequestArgsParamLogin : public WsRequestArgsParam {
  public:
-  RequestArgsParamLogin(const std::string& api_key, const std::string& passphrase, const std::string& sign,
+  WsRequestArgsParamLogin(const std::string& api_key, const std::string& passphrase, const std::string& sign,
                         const std::string& timestamp);
   boost::json::value Json() const override;
 
@@ -31,9 +31,9 @@ class RequestArgsParamLogin : public RequestArgsParam {
   std::string m_timestamp;
 };
 
-class RequestArgsParamSubscribe : public RequestArgsParam {
+class WsRequestArgsParamSubscribe : public WsRequestArgsParam {
  public:
-  RequestArgsParamSubscribe(const std::string& channel = "", const std::string& inst_type = "",
+  WsRequestArgsParamSubscribe(const std::string& channel = "", const std::string& inst_type = "",
                             const std::string& inst_family = "", const std::string& inst_id = "");
 
   boost::json::value Json() const override;
@@ -45,28 +45,28 @@ class RequestArgsParamSubscribe : public RequestArgsParam {
   std::string m_inst_family;
 };
 
-enum RequestOpEnum {
+enum WsRequestOpEnum {
   OpNONE = 0,
   OpLOING = 1,
   OpSUBSCRIBE = 2,
   OpUNSUBSCRIBE = 3,
 };
 
-class RequestBody {
+class WsRequestBody {
  public:
-  RequestBody(RequestOpEnum op, std::vector<std::shared_ptr<RequestArgsParam>> args) : m_op(op), m_args(args) {}
-  RequestBody(RequestOpEnum op, std::shared_ptr<RequestArgsParam> args) : m_op(op) { m_args.push_back(args); }
+  WsRequestBody(WsRequestOpEnum op, std::vector<std::shared_ptr<WsRequestArgsParam>> args) : m_op(op), m_args(args) {}
+  WsRequestBody(WsRequestOpEnum op, std::shared_ptr<WsRequestArgsParam> args) : m_op(op) { m_args.push_back(args); }
 
   boost::json::value Json() const;
 
  private:
-  std::string op_string(RequestOpEnum op) const;
+  std::string op_string(WsRequestOpEnum op) const;
 
-  RequestOpEnum m_op;
-  std::vector<std::shared_ptr<RequestArgsParam>> m_args;
+  WsRequestOpEnum m_op;
+  std::vector<std::shared_ptr<WsRequestArgsParam>> m_args;
 };
 
-enum ResponeEventEnum {
+enum WsResponeEventEnum {
   EventNONE = 0,
   EventLogin = 1,
   EventSubscribe = 2,
@@ -75,23 +75,23 @@ enum ResponeEventEnum {
   EventError = 5,
 };
 
-enum RespontCodeEnum {
+enum WsResponeCodeEnum {
   CodeOK = 0,
 };
 
-class ResponeArgsParam {
+class WsResponeArgsParam {
   public:
-    ResponeArgsParam() = default;
-    ResponeArgsParam(ResponeEventEnum event) : m_event(event) {}
-    ResponeEventEnum Type();
-    static std::shared_ptr<ResponeArgsParam> Create(ResponeEventEnum event, const boost::json::value& data);
+    WsResponeArgsParam() = default;
+    WsResponeArgsParam(WsResponeEventEnum event) : m_event(event) {}
+    WsResponeEventEnum Type();
+    static std::shared_ptr<WsResponeArgsParam> Create(WsResponeEventEnum event, const boost::json::value& data);
   private:
-    ResponeEventEnum m_event;
+    WsResponeEventEnum m_event;
 };
 
-class ResponeArgsParamSubscribe : public ResponeArgsParam {
+class WsResponeArgsParamSubscribe : public WsResponeArgsParam {
   public:
-    ResponeArgsParamSubscribe(const boost::json::value& data);
+    WsResponeArgsParamSubscribe(const boost::json::value& data);
     
   private:
     std::string m_channel;
@@ -100,32 +100,32 @@ class ResponeArgsParamSubscribe : public ResponeArgsParam {
     std::string m_inst_family;
 };
 
-class ResponeBody {
+class WsResponeBody {
   public:
-    ResponeBody(const boost::json::value& data);
-    ResponeBody(const std::string& data);
-    ResponeEventEnum event() const { return m_event; }
+    WsResponeBody(const boost::json::value& data);
+    WsResponeBody(const std::string& data);
+    WsResponeEventEnum event() const { return m_event; }
 
-    friend std::ostream& operator<<(std::ostream& os, const ResponeBody& respone) {
+    friend std::ostream& operator<<(std::ostream& os, const WsResponeBody& respone) {
       os << respone.string();
       return os;
     }
 
-    friend std::ostream& operator<<(std::ostream& os, const std::shared_ptr<ResponeBody> respone) {
+    friend std::ostream& operator<<(std::ostream& os, const std::shared_ptr<WsResponeBody> respone) {
       os << respone->string();
       return os;
     }
 
     std::string string() const;
   protected:
-    ResponeEventEnum m_event;
-    RespontCodeEnum m_code;
+    WsResponeEventEnum m_event;
+    WsResponeCodeEnum m_code;
     std::string m_msg;
     std::string m_conn_id;
-    std::vector<std::shared_ptr<ResponeArgsParam>> args;
+    std::vector<std::shared_ptr<WsResponeArgsParam>> args;
     boost::json::value m_data;
     bool m_init = false;
-    ResponeEventEnum event_transform(const std::string& event);
+    WsResponeEventEnum event_transform(const std::string& event);
     void read_args(const boost::json::value& data);
     void read_args(const boost::json::array& data);
 };

@@ -11,20 +11,7 @@
 // 构造函数
 Market::Okx::WebSocketApi::WebSocketApi(const std::string& api_key, const std::string& secret_key,
                                         const std::string& passphrase)
-    : m_api_key(api_key), m_secret_key(secret_key), m_passphrase(passphrase) {}
-
-// 生成签名
-std::string Market::Okx::WebSocketApi::genSingature(const std::string& timestamp, const std::string& method,
-                                                    const std::string& request_path) {
-  // 拼接字符串
-  std::string str_to_sign = timestamp + method + request_path;
-
-  // 计算SHA-256哈希值
-  std::string hash = Common::sha256_hash_base64(str_to_sign, m_secret_key);
-
-  // 返回Base64编码的哈希值
-  return hash;
-}
+    : API(api_key, secret_key, passphrase) {}
 
 boost::asio::awaitable<int> Market::Okx::WebSocketApi::login() {
   auto ctx = co_await boost::asio::this_coro::executor;
@@ -44,8 +31,6 @@ boost::asio::awaitable<int> Market::Okx::WebSocketApi::login() {
   LOG(INFO) << "Login request: " << boost::json::serialize(json_body);
   co_await m_ws_api_detail->write(boost::json::serialize(json_body));
   
-
-
   co_return ErrCode_OK;
 }
 
