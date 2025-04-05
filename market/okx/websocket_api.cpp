@@ -22,10 +22,10 @@ boost::asio::awaitable<int> Market::Okx::WebSocketApi::login() {
 
   int64_t ts = Common::get_current_time_s();
   std::string ts_str = std::to_string(ts);
-  auto login_param = std::make_shared<Detail::RequestArgsParamLogin>(m_api_key, m_passphrase,
+  auto login_param = std::make_shared<Detail::WsRequestArgsParamLogin>(m_api_key, m_passphrase,
                                         genSingature(ts_str, "GET", "/users/self/verify"), ts_str);
 
-  Detail::RequestBody req_body(Detail::OpLOING, login_param);
+  Detail::WsRequestBody req_body(Detail::OpLOING, login_param);
   auto json_body = req_body.Json();
 
   LOG(INFO) << "Login request: " << boost::json::serialize(json_body);
@@ -34,9 +34,9 @@ boost::asio::awaitable<int> Market::Okx::WebSocketApi::login() {
   co_return ErrCode_OK;
 }
 
-boost::asio::awaitable<typename std::shared_ptr<Market::Okx::Detail::ResponeBody>> Market::Okx::WebSocketApi::read() {
+boost::asio::awaitable<typename std::shared_ptr<Market::Okx::Detail::WsResponeBody>> Market::Okx::WebSocketApi::read() {
   auto read_data= co_await m_ws_api_detail->read();
-  auto respone_body = std::make_shared<Detail::ResponeBody>(read_data);
+  auto respone_body = std::make_shared<Detail::WsResponeBody>(read_data);
   co_return respone_body;
 }
 

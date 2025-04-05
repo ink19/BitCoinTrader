@@ -6,6 +6,7 @@
 #include <boost/asio/io_context.hpp>
 
 #include "websocket_api.h"
+#include "rest_api.h"
 #include "request.h"
 
 #include "config.h"
@@ -22,16 +23,18 @@ int main(int argc, char* argv[]) {
   AppConfig.init(AppOptions.config_file());
 
   Market::Okx::WebSocketApi ws_api(AppConfig.okx()->api_key(), AppConfig.okx()->secret_key(), AppConfig.okx()->passphrase());
+  Market::Okx::RestApi rest_api(AppConfig.okx()->api_key(), AppConfig.okx()->secret_key(), AppConfig.okx()->passphrase());
+
+
   boost::asio::io_context io_context;
 
   boost::asio::co_spawn(io_context, [&]() -> boost::asio::awaitable<void> {
     try {
       // test for http
-      Common::HttpRequest http_request("http://echo.free.beeceptor.com/", "POST", "Hello world");
-      http_request.set_header("Test", "Test Header");
-      auto respone = co_await http_request.request();
-      LOG(INFO) << "HTTP Response: " << respone;
+      auto account_balance = co_await rest_api.get_account_balance();
+      LOG(INFO) << "Account Balance: " << account_balance;
 
+      // test for ws
       co_await ws_api.login();
       LOG(INFO) << "Send Login successful";
 

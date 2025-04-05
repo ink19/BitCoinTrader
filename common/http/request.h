@@ -8,6 +8,7 @@
 #include <boost/asio.hpp>
 #include <boost/asio/awaitable.hpp>
 #include <boost/beast.hpp>
+#include <glog/logging.h>
 
 #include "connect.h"
 
@@ -40,10 +41,15 @@ class HttpRequest {
 
     template<typename SocketType>
     asio::awaitable<std::string> do_request(std::unique_ptr<SocketType> conn, const http::request<http::string_body> &req) {
+      LOG(INFO) << "Request: " << req.target() << " " << req.method() << " " << req.body();
       co_await http::async_write(*conn, req, asio::use_awaitable);
+      LOG(INFO) << "Request sent";
+
       beast::flat_buffer buffer;
       http::response<http::string_body> res;
       co_await http::async_read(*conn, buffer, res, asio::use_awaitable);
+      LOG(INFO) << "Response received";
+      
       if (res.result() != http::status::ok) {
         throw std::runtime_error("HTTP request failed: " + std::to_string(res.result_int()));
       }

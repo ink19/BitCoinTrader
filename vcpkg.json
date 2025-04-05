@@ -3,12 +3,13 @@
     "boost-asio",
     "boost-beast",
     "boost-json",
+    "boost-program-options",
     "boost-system",
     "boost-url",
     "cryptopp",
     "fmt",
     "glog",
     "openssl",
-    "boost-program-options"
+    "boost-multiprecision"
   ]
 }

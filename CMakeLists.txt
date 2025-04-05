@@ -8,7 +8,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 find_package(fmt CONFIG REQUIRED)
 find_package(OpenSSL REQUIRED)
-find_package(Boost REQUIRED COMPONENTS asio beast url json system program_options)
+find_package(Boost REQUIRED COMPONENTS asio beast url json system program_options multiprecision)
 find_package(glog REQUIRED)
 find_package(cryptopp REQUIRED)
 
@@ -33,6 +33,7 @@ target_link_libraries(BitCoinTrader
     Boost::json
     Boost::system
     Boost::program_options
+    Boost::multiprecision
     glog::glog
     cryptopp::cryptopp
 )

@@ -19,7 +19,7 @@ class WebSocketApi : private API {
   WebSocketApi(const std::string& api_key, const std::string& secret_key, const std::string& passphrase);
 
   boost::asio::awaitable<int> login();
-  boost::asio::awaitable<typename std::shared_ptr<Market::Okx::Detail::ResponeBody>> read();
+  boost::asio::awaitable<typename std::shared_ptr<Market::Okx::Detail::WsResponeBody>> read();
   boost::asio::awaitable<void> exec();
 
  private:
