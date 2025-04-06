@@ -7,6 +7,7 @@
 #include <cstdlib>
 
 #include "errcode.h"
+#include "component.hpp"
 
 namespace Market {
 namespace Okx {
@@ -16,17 +17,9 @@ namespace bs = boost::system;
 
 RestResponeData::RestResponeData(RestResponeTypeEnum respone_type) : respone_type(respone_type) {}
 
-RestResponeDataAccountBalance::RestResponeDataAccountBalance(const json::value& data) {
-  if (!data.is_object()) {
-    throw bs::system_error(bs::error_code(static_cast<int>(ErrCode_Invalid_Param), bs::generic_category()),
-                           "Invalid data");
-  }
-
-  auto odata = data.as_object();
-  if (odata.contains("uTime")) {
-    auto sTime = odata["uTime"];
-    uTime = std::atoi(sTime.as_string().c_str());
-  }
+RestResponeDataAccountBalance::RestResponeDataAccountBalance(const json::value& data) 
+  :RestResponeDataAccountBalanceDetail(Common::DataReader<RestResponeDataAccountBalanceDetail>::read(data.as_object())) {
+  LOG(INFO) << Common::DataPrinter(this->base());
 }
 
 std::string RestResponeDataAccountBalance::string() const { return fmt::format("uTime: {}", uTime); }

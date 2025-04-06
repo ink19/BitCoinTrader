@@ -27,7 +27,7 @@ class RestResponeData {
   RestResponeData(RestResponeTypeEnum respone_type);
   static std::shared_ptr<RestResponeData> CreateData(RestResponeTypeEnum respone_type, const json::value& data);
   virtual std::string string() const = 0;
-  
+
   friend std::ostream& operator<<(std::ostream& os, const RestResponeData& respone) {
     os << respone.string();
     return os;
@@ -37,14 +37,13 @@ class RestResponeData {
     os << respone->string();
     return os;
   }
+
  private:
   RestResponeTypeEnum respone_type;
 };
 
 class RestResponeDataAccountBalanceCCYDetail {
  public:
-  RestResponeDataAccountBalanceCCYDetail() = default;
-  RestResponeDataAccountBalanceCCYDetail(const json::value& data);
   std::string ccy;        // 币种
   int64_t uTime;          // 币种信息的更新时间，Unix时间戳的毫秒数格式
   dec_float eq,           // 币种总权益
@@ -91,11 +90,9 @@ class RestResponeDataAccountBalanceCCYDetail {
              // 0、1、2、3、4、5其中之一，数字越大代表您的负债币种触发自动换币概率越高
 };
 
-class RestResponeDataAccountBalance : public RestResponeData {
+class RestResponeDataAccountBalanceDetail {
  public:
-  RestResponeDataAccountBalance() = default;
-  RestResponeDataAccountBalance(const json::value& data);
-  int64_t uTime;              // 	账户信息的更新时间，Unix时间戳的毫秒数格式
+  int64_t uTime;              // 账户信息的更新时间，Unix时间戳的毫秒数格式
   dec_float totalEq,          // 美金层面权益
       isoEq,                  // 美金层面逐仓仓位权益
       adjEq,                  // 美金层面有效保证金
@@ -110,8 +107,16 @@ class RestResponeDataAccountBalance : public RestResponeData {
       notionalUsdForFutures,  // 交割合约持仓美元价值
       notionalUsdForOption,   // 期权持仓美元价值
       upl;                    // 账户层面全仓未实现盈亏（美元单位）
-  std::vector<RestResponeDataAccountBalanceCCYDetail> ccy;  // 币种信息
+  std::vector<RestResponeDataAccountBalanceCCYDetail> details;  // 币种信息
+};
+
+class RestResponeDataAccountBalance : public RestResponeData, public RestResponeDataAccountBalanceDetail {
+ public:
+  RestResponeDataAccountBalance() = default;
+  RestResponeDataAccountBalance(const json::value& data);
+
   std::string string() const override;
+  RestResponeDataAccountBalanceDetail base() const { return RestResponeDataAccountBalanceDetail(*this); }
 };
 
 class RestRespone {
