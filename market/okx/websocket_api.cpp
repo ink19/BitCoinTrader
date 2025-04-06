@@ -22,6 +22,9 @@ boost::asio::awaitable<int> Market::Okx::WebSocketApi::login() {
 
   int64_t ts = Common::get_current_time_s();
   std::string ts_str = std::to_string(ts);
+
+  LOG(INFO) << "m_api_key: " << m_api_key << " m_passphrase: " << m_passphrase
+            << " ts_str: " << ts_str;
   auto login_param = std::make_shared<Detail::WsRequestArgsParamLogin>(m_api_key, m_passphrase,
                                         genSingature(ts_str, "GET", "/users/self/verify"), ts_str);
 

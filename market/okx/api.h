@@ -12,7 +12,7 @@ class API {
   std::string m_api_key;
   std::string m_secret_key;
   std::string m_passphrase;
-  std::string genSingature(const std::string& timestamp, const std::string& method, const std::string& request_path);
+  std::string genSingature(const std::string& timestamp, const std::string& method, const std::string& request_path, const std::string& body = "");
 };
 
 }  // namespace Okx

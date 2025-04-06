@@ -59,15 +59,17 @@ asio::awaitable<std::string> HttpRequest::request() {
   if (port == 0) {
     port = is_ssl ? 443 : 80;
   }
-  std::string path = parsedURI->path();
+  std::string path = std::string(parsedURI->encoded_path().data());
 
   http::request<http::string_body> req{http::verb::get, path, 11};
 
+  // Set Headers
   req.set(http::field::host, host); // Set the host header
   req.set(http::field::user_agent, UA); // Set the user agent
   for (const auto& iter : m_headers) {
     req.set(iter.first, iter.second); // Set custom headers
   }
+
   if (m_method == "POST") {
     req.method(http::verb::post); // Set the request method to POST
     req.set(http::field::content_type, m_content_type); // Set the content type

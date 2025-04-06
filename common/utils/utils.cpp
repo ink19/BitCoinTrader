@@ -33,3 +33,10 @@ std::string Common::sha256_hash_base64(const std::string& input, const std::stri
 extern int64_t Common::get_current_time_s() {
   return std::time(nullptr);
 }
+
+extern std::string Common::time_format_iso(const int64_t& time) {
+  std::time_t t = static_cast<std::time_t>(time);
+  char buf[sizeof "2011-10-08T07:07:09.000Z"];
+  strftime(buf, sizeof buf, "%FT%T.000Z", gmtime(&t));
+  return std::string(buf);
+}

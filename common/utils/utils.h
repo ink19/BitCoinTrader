@@ -8,6 +8,7 @@ namespace Common {
 
 extern std::string sha256_hash_base64(const std::string& input, const std::string& key);
 extern int64_t get_current_time_s();
+extern std::string time_format_iso(const int64_t& time);
 
 template<typename T>
 class Singleton {

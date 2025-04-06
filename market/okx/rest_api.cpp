@@ -22,14 +22,15 @@ RestApi::RestApi(const std::string& api_key, const std::string& secret_key, cons
 std::map<std::string, std::string> RestApi::prepare_headers(const std::string& method, const std::string& path) {
   std::map<std::string, std::string> headers;
   int64_t ts = Common::get_current_time_s();
-  std::string ts_str = std::to_string(ts);
+  std::string ts_str = Common::time_format_iso(ts);
+  
   std::string signature = genSingature(ts_str, method, path);
 
   headers["OK-ACCESS-KEY"] = m_api_key;
   headers["OK-ACCESS-SIGN"] = signature;
   headers["OK-ACCESS-TIMESTAMP"] = ts_str;
   headers["OK-ACCESS-PASSPHRASE"] = m_passphrase;
-  headers["Content-Type"] = "application/json";
+  // headers["Content-Type"] = "application/json";
 
   return headers;
 }
@@ -37,12 +38,17 @@ std::map<std::string, std::string> RestApi::prepare_headers(const std::string& m
 asio::awaitable<std::shared_ptr<Detail::RestResponeDataAccountBalance>> RestApi::get_account_balance() {
   const std::string path = "/api/v5/account/balance";
   const std::string method = "GET";
-  const std::string request_uri = base_url + path + "?ccy=ETH";
-  auto headers = prepare_headers(method, path);
+  const std::string path_with_query = path + "?ccy=ETH";
+  const std::string request_uri = base_url + path_with_query;
+
+  auto headers = prepare_headers(method, path_with_query);
   Common::HttpRequest handler(request_uri, method);
   handler.set_header(headers);
 
   auto response_body = co_await handler.request();
+
+  LOG(INFO) << "Response: " << response_body;
+
   auto json_data = boost::json::parse(response_body);
 
   auto respone = Detail::RestRespone(json_data);

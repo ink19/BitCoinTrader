@@ -17,7 +17,7 @@ namespace bs = boost::system;
 RestResponeData::RestResponeData(RestResponeTypeEnum respone_type) : respone_type(respone_type) {}
 
 RestResponeDataAccountBalance::RestResponeDataAccountBalance(const json::value& data) {
-  if (data.is_object()) {
+  if (!data.is_object()) {
     throw bs::system_error(bs::error_code(static_cast<int>(ErrCode_Invalid_Param), bs::generic_category()),
                            "Invalid data");
   }
@@ -32,7 +32,7 @@ RestResponeDataAccountBalance::RestResponeDataAccountBalance(const json::value& 
 std::string RestResponeDataAccountBalance::string() const { return fmt::format("uTime: {}", uTime); }
 
 RestRespone::RestRespone(const json::value& jdata) {
-  if (jdata.is_object()) {
+  if (!jdata.is_object()) {
     throw bs::system_error(bs::error_code(static_cast<int>(ErrCode_Invalid_Param), bs::generic_category()),
                            "Invalid data");
   }

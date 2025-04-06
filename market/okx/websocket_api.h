@@ -23,9 +23,6 @@ class WebSocketApi : private API {
   boost::asio::awaitable<void> exec();
 
  private:
-  std::string m_api_key;
-  std::string m_secret_key;
-  std::string m_passphrase;
   std::unique_ptr<Common::WebSocket> m_ws_api_detail;
 };
 

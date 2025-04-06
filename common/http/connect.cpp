@@ -19,7 +19,9 @@ asio::awaitable<std::unique_ptr<asio::ip::tcp::socket>> Connect::connect() {
 
 asio::awaitable<std::unique_ptr<asio::ssl::stream<asio::ip::tcp::socket>>> Connect::connect_ssl() {
   auto executor = co_await asio::this_coro::executor;
-  asio::ssl::context ssl_ctx(asio::ssl::context::tlsv13);
+  asio::ssl::context ssl_ctx(asio::ssl::context::tlsv13_client);
+  ssl_ctx.set_options(asio::ssl::context::default_workarounds | asio::ssl::context::no_sslv2 | asio::ssl::context::single_dh_use | asio::ssl::context::no_sslv2 | asio::ssl::context::no_sslv3);
+
   auto socket = std::make_unique<asio::ssl::stream<asio::ip::tcp::socket>>(executor, ssl_ctx);
   co_await connect_base(socket->next_layer());
   if (!SSL_set_tlsext_host_name(socket->native_handle(), m_domain.c_str())) {

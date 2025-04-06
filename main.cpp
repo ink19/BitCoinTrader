@@ -4,6 +4,8 @@
 #include <boost/asio.hpp>
 #include <boost/asio/detached.hpp>
 #include <boost/asio/io_context.hpp>
+#include <boost/system.hpp>
+#include <boost/system/system_error.hpp>
 
 #include "websocket_api.h"
 #include "rest_api.h"
@@ -39,6 +41,8 @@ int main(int argc, char* argv[]) {
       LOG(INFO) << "Send Login successful";
 
       boost::asio::co_spawn(io_context, ws_api.exec(), boost::asio::detached);
+    } catch (const boost::system::system_error& e) {
+      LOG(ERROR) << "System Error: " << e.what();
     } catch (const std::exception& e) {
       LOG(ERROR) << "Error: " << e.what();
     }

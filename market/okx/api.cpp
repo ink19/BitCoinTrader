@@ -1,4 +1,5 @@
 #include "api.h"
+#include <string>
 
 #include "utils.h"
 
@@ -6,7 +7,7 @@ namespace Market {
 namespace Okx {
 
 std::string API::genSingature(const std::string& timestamp, const std::string& method,
-                                                    const std::string& request_path) {
+                                                    const std::string& request_path, const std::string& body) {
   // 拼接字符串
   std::string str_to_sign = timestamp + method + request_path;
 

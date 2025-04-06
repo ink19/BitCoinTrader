@@ -9,6 +9,7 @@
 #include <boost/asio/awaitable.hpp>
 #include <boost/beast.hpp>
 #include <glog/logging.h>
+#include <fmt/format.h>
 
 #include "connect.h"
 
@@ -41,7 +42,7 @@ class HttpRequest {
 
     template<typename SocketType>
     asio::awaitable<std::string> do_request(std::unique_ptr<SocketType> conn, const http::request<http::string_body> &req) {
-      LOG(INFO) << "Request: " << req.target() << " " << req.method() << " " << req.body();
+      LOG(INFO) << "Request: " << req;
       co_await http::async_write(*conn, req, asio::use_awaitable);
       LOG(INFO) << "Request sent";
 
@@ -51,7 +52,9 @@ class HttpRequest {
       LOG(INFO) << "Response received";
       
       if (res.result() != http::status::ok) {
-        throw std::runtime_error("HTTP request failed: " + std::to_string(res.result_int()));
+        throw boost::system::system_error(
+            boost::system::error_code(static_cast<int>(res.result_int()), boost::asio::error::get_ssl_category()),
+            fmt::format("Error: {} - {}", res.result_int(), res.body()));
       }
       std::string response_body = res.body();
       co_return response_body;
