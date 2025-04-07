@@ -55,14 +55,14 @@ asio::awaitable<std::shared_ptr<Detail::RestResponeDataAccountBalance>> RestApi:
   if (respone.code != 0) {
     LOG(ERROR) << "Error: " << respone.code << " - " << respone.msg;
     throw bs::system_error(
-        bs::error_code(static_cast<int>(ErrCode_Invalid_Param), bs::generic_category()),
+        bs::error_code(static_cast<int>(ErrCode_Invalid_Param), MarketErrorCategory()),
         fmt::format("Error: {} - {}", respone.code, respone.msg));
   }
 
   if (respone.data.empty()) {
     LOG(ERROR) << "No data found in response";
     throw bs::system_error(
-        bs::error_code(static_cast<int>(ErrCode_Invalid_Param), bs::generic_category()),
+        bs::error_code(static_cast<int>(ErrCode_Invalid_Param), MarketErrorCategory()),
         "No data found in response");
   }
 

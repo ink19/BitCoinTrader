@@ -26,7 +26,7 @@ std::string RestResponeDataAccountBalance::string() const { return fmt::format("
 
 RestRespone::RestRespone(const json::value& jdata) {
   if (!jdata.is_object()) {
-    throw bs::system_error(bs::error_code(static_cast<int>(ErrCode_Invalid_Param), bs::generic_category()),
+    throw bs::system_error(bs::error_code(static_cast<int>(ErrCode_Invalid_Param), MarketErrorCategory()),
                            "Invalid data");
   }
   auto odata = jdata.as_object();
@@ -45,7 +45,7 @@ RestRespone::RestRespone(const json::value& jdata) {
         data.push_back(RestResponeData::CreateData(RestResponeTypeEnum_Account_Balance, item));
       }
     } else {
-      throw bs::system_error(bs::error_code(static_cast<int>(ErrCode_Invalid_Param), bs::generic_category()),
+      throw bs::system_error(bs::error_code(static_cast<int>(ErrCode_Invalid_Param), MarketErrorCategory()),
                              "Invalid data");
     }
   }
@@ -58,7 +58,7 @@ std::shared_ptr<RestResponeData> RestResponeData::CreateData(RestResponeTypeEnum
       return std::make_shared<RestResponeDataAccountBalance>(data);
     }
     default:
-      throw bs::system_error(bs::error_code(static_cast<int>(ErrCode_Invalid_Param), bs::generic_category()),
+      throw bs::system_error(bs::error_code(static_cast<int>(ErrCode_Invalid_Param), MarketErrorCategory()),
                              "Invalid respone type");
   }
 }
