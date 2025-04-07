@@ -82,6 +82,8 @@ class DataReader {
           }
         } else if constexpr (std::is_floating_point_v<FieldType>) {
           field = obj.at(boost::pfr::get_name<index, T>()).as_double();
+        } else if constexpr (std::is_same_v<FieldType, bool>) {
+          field = obj.at(boost::pfr::get_name<index, T>()).as_bool();
         } else if constexpr (std::is_same_v<FieldType, dec_float>) {
           if (obj.at(boost::pfr::get_name<index, T>()).is_string()) {
             std::string fv = obj.at(boost::pfr::get_name<index, T>()).as_string().c_str();
@@ -94,10 +96,7 @@ class DataReader {
         } else if constexpr (is_vector_v<FieldType>) {
           auto field_json = obj.at(boost::pfr::get_name<index, T>());
           if (field_json.is_array()) {
-            for (size_t i = 0; i < field.size(); ++i) {
-              auto p_value = DataReader<typename FieldType::value_type>::read(field_json.at(i).as_object());
-              field.push_back(p_value);
-            }
+            field = DataReader<FieldType>::read(field_json.as_array());
           } else {
             LOG(ERROR) << "Expected array for field: " << boost::pfr::get_name<index, T>();
           }
@@ -107,6 +106,26 @@ class DataReader {
       }
     });
     return data;
+  }
+
+  static T read(const boost::json::array& arr) {
+    T data;
+    for (size_t i = 0; i < arr.size(); ++i) {
+      auto p_value = DataReader<typename T::value_type>::read(arr.at(i).as_object());
+      data.push_back(p_value);
+    }
+    return data;
+  }
+
+  static T read(const boost::json::value& obj) {
+    if (obj.is_object()) {
+      return read(obj.as_object());
+    } else if (obj.is_array()) {
+      return read(obj.as_array());
+    } else {
+      LOG(ERROR) << "Expected object";
+      return T();
+    }
   }
 };
 
