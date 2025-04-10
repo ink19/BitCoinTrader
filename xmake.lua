@@ -1,0 +1,12 @@
+add_requires("fmt", "openssl", "glog", "cryptopp", "boost[asio,beast,url,json,system,program_options,multiprecision,pfr,math]")
+-- add_rules("plugin.compile_commands.autoupdate", {outputdir = "build/"})
+set_languages("c++20")
+
+target("BitCoinTrader")
+    set_kind("binary")
+    add_includedirs("market/okx", "common/http", "common/utils", "config")
+    add_files("market/**/*.cpp")
+    add_files("common/**/*.cpp")
+    add_files("*.cpp")
+    add_packages("fmt", "openssl", "glog", "cryptopp")
+    add_packages("boost")
