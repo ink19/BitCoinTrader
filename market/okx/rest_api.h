@@ -13,12 +13,15 @@ namespace Okx {
 
 namespace asio = boost::asio;
 
+
+
 class RestApi : private API {
 public:
   RestApi(const std::string& api_key, const std::string& secret_key,
     const std::string& passphrase);
   
     asio::awaitable<std::shared_ptr<Detail::RestResponeDataAccountBalance>> get_account_balance();
+    asio::awaitable<std::shared_ptr<Detail::RestResponeDataAccountBalance>> get_account_instruments();
 
 private:
   std::map<std::string, std::string> prepare_headers(const std::string& method, const std::string& path);

@@ -157,6 +157,25 @@ class DataReader {
   }
 };
 
+
+class StringEnum : public std::string {
+public:
+  StringEnum() = default;
+  explicit StringEnum(const std::string& str) : std::string(str) {}
+  const std::string& ToString() {
+    return *this;
+  }
+
+  template<typename T>
+  static T FromString(const std::string& str) {
+    return T(str);
+  }
+
+  StringEnum& operator=(const std::string& str) {
+    return *this = StringEnum(str);
+  }
+};
+
 }  // namespace Common
 
 #endif
