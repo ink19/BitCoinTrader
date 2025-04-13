@@ -67,21 +67,38 @@ class DataReader {
     boost::pfr::for_each_field(data, [&](auto&& field, auto index) {
       using FieldType = std::decay_t<decltype(field)>;
       if (obj.contains(boost::pfr::get_name<index, T>())) {
+        LOG(INFO) << "read field: " << boost::pfr::get_name<index, T>();
+
         if constexpr (std::is_same_v<FieldType, std::string>) {
           field = obj.at(boost::pfr::get_name<index, T>()).as_string().c_str();
         } else if constexpr (std::is_integral_v<FieldType>) {
           if (obj.at(boost::pfr::get_name<index, T>()).is_string()) {
             std::string ps = std::string(obj.at(boost::pfr::get_name<index, T>()).as_string());
-            field = std::stoll(ps);
+            if (ps.empty()) {
+              field = 0;
+            } else {
+              field = std::stoll(ps);
+            }
           } else if (obj.at(boost::pfr::get_name<index, T>()).is_int64()) {
             field = obj.at(boost::pfr::get_name<index, T>()).as_int64();
           } else if (obj.at(boost::pfr::get_name<index, T>()).is_uint64()) {
             field = obj.at(boost::pfr::get_name<index, T>()).as_uint64();
           } else if (obj.at(boost::pfr::get_name<index, T>()).is_double()) {
-            field = static_cast<FieldType>(obj.at(boost::pfr::get_name<index, T>()).as_double());
+            field = obj.at(boost::pfr::get_name<index, T>()).as_double();
           }
         } else if constexpr (std::is_floating_point_v<FieldType>) {
-          field = obj.at(boost::pfr::get_name<index, T>()).as_double();
+          if (obj.at(boost::pfr::get_name<index, T>()).is_int64()) {
+            field = static_cast<FieldType>(obj.at(boost::pfr::get_name<index, T>()).as_int64());
+          } else if (obj.at(boost::pfr::get_name<index, T>()).is_double()) {
+            field = static_cast<FieldType>(obj.at(boost::pfr::get_name<index, T>()).as_double());
+          } else if (obj.at(boost::pfr::get_name<index, T>()).is_string()) {
+            auto value = obj.at(boost::pfr::get_name<index, T>()).as_string();
+            if (value.empty()) {
+              field = static_cast<FieldType>(0);
+            } else {
+              field = std::stof(std::string(value));
+            }
+          }
         } else if constexpr (std::is_same_v<FieldType, bool>) {
           field = obj.at(boost::pfr::get_name<index, T>()).as_bool();
         } else if constexpr (std::is_same_v<FieldType, dec_float>) {

@@ -38,7 +38,7 @@ std::map<std::string, std::string> RestApi::prepare_headers(const std::string& m
 asio::awaitable<std::shared_ptr<Detail::RestResponeDataAccountBalance>> RestApi::get_account_balance() {
   const std::string path = "/api/v5/account/balance";
   const std::string method = "GET";
-  const std::string path_with_query = path + "?ccy=ETH";
+  const std::string path_with_query = path + "?ccy=USDT";
   const std::string request_uri = base_url + path_with_query;
 
   auto headers = prepare_headers(method, path_with_query);
