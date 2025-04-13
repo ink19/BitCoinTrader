@@ -100,7 +100,18 @@ class DataReader {
             }
           }
         } else if constexpr (std::is_same_v<FieldType, bool>) {
-          field = obj.at(boost::pfr::get_name<index, T>()).as_bool();
+          if (obj.at(boost::pfr::get_name<index, T>()).is_string()) {
+            std::string fv = obj.at(boost::pfr::get_name<index, T>()).as_string().c_str();
+            if (!fv.empty()) {
+              field = fv == "true" ? true : false;
+            } else {
+              field = false;
+            }
+          } else if (obj.at(boost::pfr::get_name<index, T>()).is_bool()) {
+            field = obj.at(boost::pfr::get_name<index, T>()).as_bool();
+          } else if (obj.at(boost::pfr::get_name<index, T>()).is_int64()) {
+            field = obj.at(boost::pfr::get_name<index, T>()).as_int64() != 0;
+          }
         } else if constexpr (std::is_same_v<FieldType, dec_float>) {
           if (obj.at(boost::pfr::get_name<index, T>()).is_string()) {
             std::string fv = obj.at(boost::pfr::get_name<index, T>()).as_string().c_str();
