@@ -13,6 +13,7 @@
 #include <boost/beast/websocket.hpp>
 #include <boost/url.hpp>
 #include <boost/url/parse.hpp>
+#include <boost/chrono.hpp>
 
 #include "errcode.h"
 #include "connect.h"
@@ -21,6 +22,7 @@ namespace beast = boost::beast;
 namespace http = beast::http;
 namespace websocket = beast::websocket;
 using tcp = boost::asio::ip::tcp;
+using namespace std::chrono_literals;
 
 namespace Common {
 
@@ -103,7 +105,7 @@ asio::awaitable<void> WebSocketDetailWSS::connect() {
 
   this->m_ws = std::make_unique<beast::websocket::stream<asio::ssl::stream<asio::ip::tcp::socket>>>(std::move(*base_socket));
 
-  co_await this->m_ws->async_handshake(this->m_host, this->m_path, boost::asio::use_awaitable);
+  co_await this->m_ws->async_handshake(this->m_host, this->m_path, asio::cancel_after(10s));
 
   co_return;
 }

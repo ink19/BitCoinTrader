@@ -1,4 +1,4 @@
-add_requires("fmt", "openssl", "glog", "cryptopp", "boost[asio,beast,url,json,system,program_options,multiprecision,pfr,math]")
+add_requires("fmt", "openssl", "glog", "cryptopp", "boost[asio,beast,url,json,system,program_options,multiprecision,pfr,math,chrono]")
 add_rules("plugin.compile_commands.autoupdate", {outputdir = "build/"})
 set_languages("c++20")
 

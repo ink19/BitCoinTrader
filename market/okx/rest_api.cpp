@@ -71,5 +71,40 @@ asio::awaitable<std::shared_ptr<Detail::RestResponeDataAccountBalance>> RestApi:
   co_return account_balance;
 }
 
+asio::awaitable<std::shared_ptr<Detail::RestResponeDataAccountInstrument>> RestApi::get_account_instruments(Detail::InstTypeEnum instType) {
+  const std::string path = "/api/v5/account/instruments";
+  const std::string method = "GET";
+  const std::string path_with_query = path + "?instType=" + instType;
+  const std::string request_uri = base_url + path_with_query;
+
+  auto headers = prepare_headers(method, path_with_query);
+  Common::HttpRequest handler(request_uri, method);
+  handler.set_header(headers);
+
+  auto response_body = co_await handler.request();
+
+  // LOG(INFO) << "Response: " << response_body;
+
+  auto json_data = boost::json::parse(response_body);
+
+  auto respone = Detail::RestRespone(json_data);
+  if (respone.code != 0) {
+    LOG(ERROR) << "Error: " << respone.code << " - " << respone.msg;
+    throw bs::system_error(
+        bs::error_code(static_cast<int>(ErrCode_Invalid_Param), MarketErrorCategory()),
+        fmt::format("Error: {} - {}", respone.code, respone.msg));
+  }
+
+  if (respone.data.empty()) {
+    LOG(ERROR) << "No data found in response";
+    throw bs::system_error(
+        bs::error_code(static_cast<int>(ErrCode_Invalid_Param), MarketErrorCategory()),
+        "No data found in response");
+  }
+
+  auto account_instruments = std::dynamic_pointer_cast<Detail::RestResponeDataAccountInstrument>(respone.data[0]);
+  co_return account_instruments;
+}
+
 }  // namespace Okx
 }  // namespace Market

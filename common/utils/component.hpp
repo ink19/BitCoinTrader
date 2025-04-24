@@ -28,23 +28,34 @@ template <typename _Tp>
 template <typename T>
 class DataPrinter {
 public:
-  DataPrinter(const T& data) : data_(data) {}
+  DataPrinter(const T& data, int depth = 1) : data_(data), depth_(depth) {}
 
   template<typename U>
-  static U& print(U& os, const T& data) {
+  static U& print(U& os, const T& data, int depth = 1) {
     boost::pfr::for_each_field(data, [&](auto&& field, auto index) {
       using FieldType = std::decay_t<decltype(field)>;
+      LOG(INFO) << "print field: " << boost::pfr::get_name<index, T>();
       if constexpr (is_vector_v<FieldType>) {
         os << boost::pfr::get_name<index, T>() << ": [";
         for (size_t i = 0; i < field.size(); ++i) {
-          os << DataPrinter<typename FieldType::value_type>(field[i]);
+          os << DataPrinter<typename FieldType::value_type>(field[i], depth + 1);
           if (i != field.size() - 1) {
             os << ", ";
           }
         }
-        os << "];";
+        os << "]; ";
+      } else if constexpr (std::is_same_v<FieldType, dec_float>) {
+        os << boost::pfr::get_name<index, T>() << ": " << field << "; ";
+      } else if constexpr (std::is_base_of_v<FieldType, std::string>) {
+        os << boost::pfr::get_name<index, T>() << ": " << field << "; ";
+      } else if constexpr (std::is_integral_v<FieldType>) {
+        os << boost::pfr::get_name<index, T>() << ": " << field << "; ";
+      } else if constexpr (std::is_object_v<FieldType>) {
+        os << boost::pfr::get_name<index, T>() << ": {";
+        os << DataPrinter<FieldType>(field, depth + 1);
+        os << "}; ";
       } else {
-        os << boost::pfr::get_name<index, T>() << ": " << field << ";";
+        os << boost::pfr::get_name<index, T>() << ": " << field << "; ";
       }
     });
     return os;
@@ -52,11 +63,12 @@ public:
 
   template <typename U>
   friend U& operator<<(U& os, const DataPrinter<T>& data) {
-    return print(os, data.data_);
+    return print(os, data.data_, data.depth_ + 1);
   }
 
 private:
   const T& data_;
+  int depth_;
 };
 
 template <typename T>
@@ -73,7 +85,7 @@ class DataReader {
           field = obj.at(boost::pfr::get_name<index, T>()).as_string().c_str();
         } else if constexpr (std::is_integral_v<FieldType>) {
           if (obj.at(boost::pfr::get_name<index, T>()).is_string()) {
-            std::string ps = std::string(obj.at(boost::pfr::get_name<index, T>()).as_string());
+            auto ps = std::string(obj.at(boost::pfr::get_name<index, T>()).as_string());
             if (ps.empty()) {
               field = 0;
             } else {
@@ -122,11 +134,18 @@ class DataReader {
             }
           }
         } else if constexpr (is_vector_v<FieldType>) {
+          // LOG(ERROR) << "name: " << boost::pfr::get_name<index, T>();
           auto field_json = obj.at(boost::pfr::get_name<index, T>());
           if (field_json.is_array()) {
             field = DataReader<FieldType>::read(field_json.as_array());
           } else {
             LOG(ERROR) << "Expected array for field: " << boost::pfr::get_name<index, T>();
+          }
+        } else if constexpr (std::is_object_v<FieldType>) {
+          if (obj.at(boost::pfr::get_name<index, T>()).is_object()) {
+            field = DataReader<FieldType>::read(obj.at(boost::pfr::get_name<index, T>()).as_object());
+          } else {
+            LOG(ERROR) << "Expected object for field: " << boost::pfr::get_name<index, T>();
           }
         } else {
           LOG(ERROR) << "Unsupported type: " << typeid(FieldType).name();
@@ -138,9 +157,11 @@ class DataReader {
 
   static T read(const boost::json::array& arr) {
     T data;
-    for (size_t i = 0; i < arr.size(); ++i) {
-      auto p_value = DataReader<typename T::value_type>::read(arr.at(i).as_object());
-      data.push_back(p_value);
+    if constexpr (is_vector_v<T>) {
+      for (size_t i = 0; i < arr.size(); ++i) {
+        auto p_value = DataReader<typename T::value_type>::read(arr.at(i).as_object());
+        data.push_back(p_value);
+      }
     }
     return data;
   }
@@ -157,6 +178,7 @@ class DataReader {
   }
 };
 
+// typedef std::string StringEnum;
 
 class StringEnum : public std::string {
 public:

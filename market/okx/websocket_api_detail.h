@@ -5,6 +5,7 @@
 #include <boost/json/array.hpp>
 #include <boost/json/object.hpp>
 #include <functional>
+#include <boost/multiprecision/cpp_dec_float.hpp>
 #include <memory>
 
 namespace Market {
@@ -12,6 +13,10 @@ namespace Market {
 namespace Okx {
 
 namespace Detail {
+
+namespace mp = boost::multiprecision;
+using dec_float = mp::cpp_dec_float_100;
+  
 
 class WsRequestArgsParam {
  public:
@@ -128,6 +133,29 @@ class WsResponeBody {
     WsResponeEventEnum event_transform(const std::string& event);
     void read_args(const boost::json::value& data);
     void read_args(const boost::json::array& data);
+};
+
+class WsResponeSubscribeArg {
+public:
+  std::string channel;
+  std::string instId;
+};
+
+class WsResponeSubscribeData {
+public:
+  std::string instId;
+  std::string tradeId;
+  std::string side;
+  dec_float px,
+  sz,
+  count;
+  int64_t ts;
+};
+
+class WsResponeSubscribe {
+public:
+  WsResponeSubscribeArg arg;
+  std::vector<WsResponeSubscribeData> data;
 };
 
 }  // namespace Detail

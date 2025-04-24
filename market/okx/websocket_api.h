@@ -19,11 +19,21 @@ class WebSocketApi : private API {
   WebSocketApi(const std::string& api_key, const std::string& secret_key, const std::string& passphrase);
 
   boost::asio::awaitable<int> login();
-  boost::asio::awaitable<typename std::shared_ptr<Market::Okx::Detail::WsResponeBody>> read();
+  boost::asio::awaitable<int> subscribe(const std::string& channel, const std::string& instId);
+
   boost::asio::awaitable<void> exec();
 
  private:
-  std::unique_ptr<Common::WebSocket> m_ws_api_detail;
+  boost::asio::awaitable<int> connect_public();
+  boost::asio::awaitable<int> keep_alive();
+
+  boost::asio::awaitable<typename std::shared_ptr<Market::Okx::Detail::WsResponeBody>> read_private();
+  boost::asio::awaitable<Market::Okx::Detail::WsResponeSubscribe> read_public();
+
+  std::unique_ptr<Common::WebSocket> m_ws_api_private;
+
+  std::unique_ptr<Common::WebSocket> m_ws_api_public;
+  std::vector<std::shared_ptr<Detail::WsRequestArgsParamSubscribe>> m_public_subscribed_args;
 };
 
 }  // namespace Okx

@@ -21,6 +21,7 @@ using dec_float = mp::cpp_dec_float_100;
 enum RestResponeTypeEnum {
   RestResponeTypeEnum_NONE = 0,
   RestResponeTypeEnum_Account_Balance = 1,
+  RestResponeTypeEnum_Account_Instrument = 2,
 };
 
 class RestResponeData {
@@ -121,31 +122,31 @@ class RestResponeDataAccountBalance : public RestResponeData, public RestRespone
   RestResponeDataAccountBalanceDetail base() const { return RestResponeDataAccountBalanceDetail(*this); }
 };
 
-typedef Common::StringEnum InstTypeEnum;
+typedef std::string InstTypeEnum;
 const auto InstTypeEnumNone = InstTypeEnum("");
 const auto InstTypeEnumSPOT = InstTypeEnum("SPOT");        // 现货
 const auto InstTypeEnumFUTURES = InstTypeEnum("FUTURES");  // 交割合约
 const auto InstTypeEnumSWAP = InstTypeEnum("SWAP");        // 永续合约
 const auto InstTypeEnumOPTION = InstTypeEnum("OPTION");    // 期权
 
-typedef Common::StringEnum OptTypeEnum;
+typedef std::string OptTypeEnum;
 const auto OptTypeEnumNone = OptTypeEnum("");
 const auto OptTypeEnumC = OptTypeEnum("C");  // 看涨期权
 const auto OptTypeEnumP = OptTypeEnum("P");  // 看跌期权
 
-typedef Common::StringEnum  CTTypeEnum;
+typedef std::string  CTTypeEnum;
 const auto CTTypeEnumNone = CTTypeEnum("");
 const auto CTTypeEnumLINEAR = CTTypeEnum("linear");  // 永续合约
 const auto CTTypeEnumINVERSE = CTTypeEnum("inverse");  // 永续合约
 
-typedef Common::StringEnum  InstStatusEnum;
+typedef std::string  InstStatusEnum;
 const auto InstStatusEnumNone = InstStatusEnum("");
 const auto InstStatusEnumLIVE = InstStatusEnum("live");  // 已创建
 const auto InstStatusEnumSUSPEND = InstStatusEnum("suspend");  // 暂停中
 const auto InstStatusEnumPREOPEN = InstStatusEnum("preopen");  // 预上线，交割和期权合约轮转生成到开始交易；部分交易产品上线前
 const auto InstStatusEnumTest = InstStatusEnum("Test");  // 测试中（测试产品，不可交易）
 
-typedef Common::StringEnum  InstRuleTypeEnum;
+typedef std::string  InstRuleTypeEnum;
 const auto InstRuleTypeEnumNone = InstRuleTypeEnum("");
 const auto InstRuleTypeEnumNORMAL = InstRuleTypeEnum("normal");  // 普通交易
 const auto InstRuleTypeEnumPREMARKET = InstRuleTypeEnum("pre_market");  // 盘前交易
@@ -183,6 +184,15 @@ class RestResponeDataAccountInstrumentDetail {
   dec_float maxTriggerSz;// 计划委托委托的单笔最大委托数量
   dec_float maxStopSz;// 止盈止损市价委托的单笔最大委托数量
   bool futureSettlement;// 交割合约是否支持每日结算
+};
+
+class RestResponeDataAccountInstrument : public RestResponeData, public RestResponeDataAccountInstrumentDetail {
+  public:
+  RestResponeDataAccountInstrument() = default;
+  RestResponeDataAccountInstrument(const json::value& data);
+
+  std::string string() const override;
+  RestResponeDataAccountInstrumentDetail base() const { return RestResponeDataAccountInstrumentDetail(*this); }
 };
 
 class RestRespone {

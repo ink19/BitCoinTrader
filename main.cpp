@@ -26,8 +26,8 @@ int main(int argc, char* argv[]) {
 
   Market::Okx::WebSocketApi ws_api(AppConfig.okx()->api_key(), AppConfig.okx()->secret_key(),
                                    AppConfig.okx()->passphrase());
-  Market::Okx::RestApi rest_api(AppConfig.okx()->api_key(), AppConfig.okx()->secret_key(),
-                                AppConfig.okx()->passphrase());
+  // Market::Okx::RestApi rest_api(AppConfig.okx()->api_key(), AppConfig.okx()->secret_key(),
+  //                               AppConfig.okx()->passphrase());
 
   boost::asio::io_context io_context;
 
@@ -35,13 +35,8 @@ int main(int argc, char* argv[]) {
       io_context,
       [&]() -> boost::asio::awaitable<void> {
         try {
-          // test for http
-          auto account_balance = co_await rest_api.get_account_balance();
-          LOG(INFO) << "Account Balance: " << Common::DataPrinter(account_balance->base());
-          LOG(INFO) << "Account Balance: " << account_balance->uTime;
           // test for ws
-          co_await ws_api.login();
-          LOG(INFO) << "Send Login successful";
+          co_await ws_api.subscribe("trades", "ETH-USDT");
 
           boost::asio::co_spawn(io_context, ws_api.exec(), boost::asio::detached);
         } catch (const boost::system::system_error& e) {
@@ -52,11 +47,9 @@ int main(int argc, char* argv[]) {
       },
       boost::asio::detached);
 
-  try {
-    io_context.run();
-  } catch (const std::exception& e) {
-    LOG(ERROR) << "Error: " << e.what();
-  }
+  io_context.run();
+
+  LOG(INFO) << "END";
 
   google::ShutdownGoogleLogging();
   return 0;

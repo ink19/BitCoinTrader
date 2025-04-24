@@ -18,11 +18,27 @@ namespace bs = boost::system;
 RestResponeData::RestResponeData(RestResponeTypeEnum respone_type) : respone_type(respone_type) {}
 
 RestResponeDataAccountBalance::RestResponeDataAccountBalance(const json::value& data) 
-  :RestResponeDataAccountBalanceDetail(Common::DataReader<RestResponeDataAccountBalanceDetail>::read(data.as_object())) {
-  LOG(INFO) << Common::DataPrinter(this->base());
+  // :RestResponeDataAccountBalanceDetail(Common::DataReader<RestResponeDataAccountBalanceDetail>::read(data.as_object()))
+{
 }
 
-std::string RestResponeDataAccountBalance::string() const { return fmt::format("uTime: {}", uTime); }
+std::string RestResponeDataAccountBalance::string() const {
+  std::stringstream ss;
+  // ss << Common::DataPrinter(this->base());
+  return ss.str();
+}
+
+RestResponeDataAccountInstrument::RestResponeDataAccountInstrument(const json::value& data) 
+  // :RestResponeDataAccountInstrumentDetail(Common::DataReader<RestResponeDataAccountInstrumentDetail>::read(data.as_object()))
+{
+}
+
+std::string RestResponeDataAccountInstrument::string() const {
+  std::stringstream ss;
+  // ss << Common::DataPrinter(this->base());
+  return ss.str();
+}
+
 
 RestRespone::RestRespone(const json::value& jdata) {
   if (!jdata.is_object()) {
@@ -56,6 +72,9 @@ std::shared_ptr<RestResponeData> RestResponeData::CreateData(RestResponeTypeEnum
   switch (respone_type) {
     case RestResponeTypeEnum_Account_Balance: {
       return std::make_shared<RestResponeDataAccountBalance>(data);
+    }
+    case RestResponeTypeEnum_Account_Instrument: {
+      return std::make_shared<RestResponeDataAccountInstrument>(data);
     }
     default:
       throw bs::system_error(bs::error_code(static_cast<int>(ErrCode_Invalid_Param), MarketErrorCategory()),

@@ -21,7 +21,7 @@ public:
     const std::string& passphrase);
   
     asio::awaitable<std::shared_ptr<Detail::RestResponeDataAccountBalance>> get_account_balance();
-    asio::awaitable<std::shared_ptr<Detail::RestResponeDataAccountBalance>> get_account_instruments();
+    asio::awaitable<std::shared_ptr<Detail::RestResponeDataAccountInstrument>> get_account_instruments(Detail::InstTypeEnum instType);
 
 private:
   std::map<std::string, std::string> prepare_headers(const std::string& method, const std::string& path);
