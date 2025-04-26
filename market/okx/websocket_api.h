@@ -6,6 +6,7 @@
 #include <memory>
 #include <string>
 #include <websocket_api_detail.h>
+#include <functional>
 
 #include "WebSocket.h"
 #include "api.h"
@@ -13,6 +14,8 @@
 namespace Market {
 
 namespace Okx {
+
+typedef std::function<boost::asio::awaitable<int>(std::shared_ptr<Detail::WsResponeSubscribeData> )> WsResponeSubscribeCallback;
 
 class WebSocketApi : private API {
  public:
@@ -23,17 +26,22 @@ class WebSocketApi : private API {
 
   boost::asio::awaitable<void> exec();
 
+  void set_public_callback(WsResponeSubscribeCallback callback) {
+    m_public_callback = callback;
+  }
+
  private:
   boost::asio::awaitable<int> connect_public();
   boost::asio::awaitable<int> keep_alive();
 
   boost::asio::awaitable<typename std::shared_ptr<Market::Okx::Detail::WsResponeBody>> read_private();
-  boost::asio::awaitable<Market::Okx::Detail::WsResponeSubscribe> read_public();
+  boost::asio::awaitable<std::shared_ptr<Market::Okx::Detail::WsResponeSubscribe>> read_public();
 
   std::unique_ptr<Common::WebSocket> m_ws_api_private;
 
   std::unique_ptr<Common::WebSocket> m_ws_api_public;
   std::vector<std::shared_ptr<Detail::WsRequestArgsParamSubscribe>> m_public_subscribed_args;
+  WsResponeSubscribeCallback m_public_callback;
 };
 
 }  // namespace Okx

@@ -13,6 +13,7 @@
 #include "request.h"
 #include "rest_api.h"
 #include "websocket_api.h"
+#include "record.h"
 
 int main(int argc, char* argv[]) {
   AppOptions(argc, argv);
@@ -26,16 +27,19 @@ int main(int argc, char* argv[]) {
 
   Market::Okx::WebSocketApi ws_api(AppConfig.okx()->api_key(), AppConfig.okx()->secret_key(),
                                    AppConfig.okx()->passphrase());
-  // Market::Okx::RestApi rest_api(AppConfig.okx()->api_key(), AppConfig.okx()->secret_key(),
-  //                               AppConfig.okx()->passphrase());
-
   boost::asio::io_context io_context;
+
+  Record::Record record("record_file");
+  auto ws_api_callback = [&record](std::shared_ptr<Market::Okx::Detail::WsResponeSubscribeData> data) -> boost::asio::awaitable<int> { 
+    co_return co_await record.write(data);
+  };
+  ws_api.set_public_callback(ws_api_callback);
+
 
   boost::asio::co_spawn(
       io_context,
       [&]() -> boost::asio::awaitable<void> {
         try {
-          // test for ws
           co_await ws_api.subscribe("trades", "ETH-USDT");
 
           boost::asio::co_spawn(io_context, ws_api.exec(), boost::asio::detached);

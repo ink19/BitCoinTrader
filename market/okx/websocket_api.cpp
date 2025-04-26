@@ -82,14 +82,10 @@ boost::asio::awaitable<typename std::shared_ptr<Market::Okx::Detail::WsResponeBo
   co_return respone_body;
 }
 
-boost::asio::awaitable<Market::Okx::Detail::WsResponeSubscribe> Market::Okx::WebSocketApi::read_public() {
+boost::asio::awaitable<std::shared_ptr<Market::Okx::Detail::WsResponeSubscribe>> Market::Okx::WebSocketApi::read_public() {
   auto read_data= co_await m_ws_api_public->read();
-  LOG(INFO) << "Received Raw Data: " << read_data;
-  // auto respone_body = Detail::WsResponeSubscribe();
   auto respone_body = Common::DataReader<Detail::WsResponeSubscribe>::read(boost::json::parse(read_data));
-  LOG(INFO) << "Received";
-
-  co_return respone_body;
+  co_return std::make_shared<Detail::WsResponeSubscribe>(respone_body);
 }
 
 boost::asio::awaitable<int> Market::Okx::WebSocketApi::keep_alive() {
@@ -100,8 +96,12 @@ boost::asio::awaitable<void> Market::Okx::WebSocketApi::exec() {
   for (;;) {
     try {
       auto read_result = co_await read_public();
-      // LOG(INFO) << "Received: ";
-      LOG(INFO) << "Received: " << Common::DataPrinter(read_result);
+      LOG(INFO) << "Received: " << Common::DataPrinter(*read_result);
+      if (m_public_callback) {
+        for (auto data : read_result->data) {
+          co_await m_public_callback(data);
+        }
+      }
     } catch (const boost::beast::system_error& e) {
       LOG(ERROR) << "Error: " << e.code() << " msg: " << e.what();
       m_ws_api_public = nullptr;

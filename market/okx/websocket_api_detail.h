@@ -150,22 +150,12 @@ public:
   sz,
   count;
   int64_t ts;
-  template<class Archive>
-  void serialize(Archive & ar, const unsigned int version) {
-    ar & instId;
-    ar & tradeId;
-    ar & side;
-    ar & px;
-    ar & sz;
-    ar & count;
-    ar & ts;
-  }
 };
 
 class WsResponeSubscribe {
 public:
   WsResponeSubscribeArg arg;
-  std::vector<WsResponeSubscribeData> data;
+  std::vector<std::shared_ptr<WsResponeSubscribeData>> data;
 };
 
 }  // namespace Detail
