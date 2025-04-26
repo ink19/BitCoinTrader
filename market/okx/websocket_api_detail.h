@@ -4,9 +4,9 @@
 #include <boost/json.hpp>
 #include <boost/json/array.hpp>
 #include <boost/json/object.hpp>
-#include <functional>
 #include <boost/multiprecision/cpp_dec_float.hpp>
 #include <memory>
+#include <boost/serialization/serialization.hpp>
 
 namespace Market {
 
@@ -150,6 +150,16 @@ public:
   sz,
   count;
   int64_t ts;
+  template<class Archive>
+  void serialize(Archive & ar, const unsigned int version) {
+    ar & instId;
+    ar & tradeId;
+    ar & side;
+    ar & px;
+    ar & sz;
+    ar & count;
+    ar & ts;
+  }
 };
 
 class WsResponeSubscribe {
