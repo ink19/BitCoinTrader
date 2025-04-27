@@ -84,8 +84,10 @@ boost::asio::awaitable<typename std::shared_ptr<Market::Okx::Detail::WsResponeBo
 
 boost::asio::awaitable<std::shared_ptr<Market::Okx::Detail::WsResponeSubscribe>> Market::Okx::WebSocketApi::read_public() {
   auto read_data= co_await m_ws_api_public->read();
-  auto respone_body = Common::DataReader<Detail::WsResponeSubscribe>::read(boost::json::parse(read_data));
-  co_return std::make_shared<Detail::WsResponeSubscribe>(respone_body);
+  auto respone_body = Common::DataReader<
+    std::shared_ptr<Detail::WsResponeSubscribe>
+  >::read(boost::json::parse(read_data));
+  co_return respone_body;
 }
 
 boost::asio::awaitable<int> Market::Okx::WebSocketApi::keep_alive() {

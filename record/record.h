@@ -68,11 +68,31 @@ struct RecordProtocol {
     }
     boost::endian::native_to_big_inplace(this->type);
   }
+
+  void deserialize() {
+    boost::endian::big_to_native_inplace(this->type);
+    switch (type) {
+      case SerializeTypeEnum_Vector:
+        boost::endian::big_to_native_inplace(this->data.vector.length);
+        break;
+      case SerializeTypeEnum_Struct:
+        boost::endian::big_to_native_inplace(this->data.struct_.length);
+        break;
+      case SerializeTypeEnum_Integer:
+        boost::endian::big_to_native_inplace(this->data.integer);
+        break;
+      case SerializeTypeEnum_String:
+        boost::endian::big_to_native_inplace(this->data.string.length);
+        break;
+      default:
+        break;
+    }
+  }
 };
 #pragma pack(pop)
 
 template <typename N>
-uint32_t serialize(asio::mutable_buffer& s, N& o) {
+uint32_t serialize(asio::mutable_buffer& s, const N& o) {
   if constexpr (Common::is_shared_v<N>) {
     return serialize(s, *o.get());
   } else {
