@@ -33,7 +33,8 @@ WebSocket::WebSocket(const std::string &uri) { this->add_uri(uri); }
 int WebSocket::add_uri(const std::string &uri) {
   auto parsedURI = boost::urls::parse_uri(uri);
   if (parsedURI.has_error()) {
-    return ErrCode_Invalid_Param;
+    throw boost::system::system_error(
+      static_cast<int>(ErrCode::Invalid_Param), RequestErrorCategory(), "Invalid URI");
   }
 
   if (parsedURI->scheme() == "wss") {
@@ -42,7 +43,8 @@ int WebSocket::add_uri(const std::string &uri) {
   m_host = parsedURI->host();
   m_port = parsedURI->port_number();
   m_path = parsedURI->path();
-  return ErrCode_OK;
+  LOG(INFO) << "host: " << m_host << " port: " << m_port << " path: " << m_path;
+  return 0;
 }
 
 asio::awaitable<void> WebSocket::connect() {
@@ -60,6 +62,7 @@ asio::awaitable<std::string> WebSocket::read() {
 }
 
 asio::awaitable<void> WebSocket::write(const std::string &msg) {
+  LOG(INFO) << "write: " << msg;
   co_await m_ws_detail->write(msg);
   co_return;
 }
@@ -106,7 +109,7 @@ asio::awaitable<void> WebSocketDetailWSS::connect() {
   this->m_ws = std::make_unique<beast::websocket::stream<asio::ssl::stream<asio::ip::tcp::socket>>>(std::move(*base_socket));
 
   co_await this->m_ws->async_handshake(this->m_host, this->m_path, asio::cancel_after(10s));
-
+  LOG(INFO) << "WSS Handshake success";
   co_return;
 }
 

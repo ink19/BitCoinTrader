@@ -1,19 +1,20 @@
 #include <fmt/core.h>
 #include <glog/logging.h>
 
+#include <algorithm>
+#include <boost/algorithm/string.hpp>
 #include <boost/asio.hpp>
 #include <boost/asio/detached.hpp>
 #include <boost/asio/io_context.hpp>
 #include <boost/system.hpp>
 #include <boost/system/system_error.hpp>
 
-#include "component.hpp"
+#include "binance/ws_vision.h"
+#include "compare/compare.h"
 #include "config.h"
+#include "okx/websocket_api.h"
 #include "options.h"
-#include "request.h"
-#include "rest_api.h"
-#include "websocket_api.h"
-#include "record.h"
+#include "wework/wework.h"
 
 int main(int argc, char* argv[]) {
   AppOptions(argc, argv);
@@ -25,24 +26,24 @@ int main(int argc, char* argv[]) {
   LOG(INFO) << "CONFIG FILE: " << AppOptions.config_file();
   AppConfig.init(AppOptions.config_file());
 
-  Market::Okx::WebSocketApi ws_api(AppConfig.okx()->api_key(), AppConfig.okx()->secret_key(),
-                                   AppConfig.okx()->passphrase());
+  auto ws_api = std::make_shared<Market::Okx::WebSocketApi>(AppConfig.okx()->api_key(), AppConfig.okx()->secret_key(),
+                                                            AppConfig.okx()->passphrase());
+  auto binance_api = std::make_shared<Market::Binance::BinanceVisionAPI>();
+  auto notice_api = std::make_shared<Notice::WeWork::WeWorkAPI>(AppConfig.wework()->key());
   boost::asio::io_context io_context;
 
-  Record::Record record("record_file");
-  auto ws_api_callback = [&record](std::shared_ptr<Market::Okx::Detail::WsResponeSubscribeData> data) -> boost::asio::awaitable<int> { 
-    co_return co_await record.write(data);
-  };
-  ws_api.set_public_callback(ws_api_callback);
-
+  Service::Compare::CompareSerivce s(binance_api, ws_api, notice_api);
 
   boost::asio::co_spawn(
       io_context,
       [&]() -> boost::asio::awaitable<void> {
         try {
-          co_await ws_api.subscribe("trades", "ETH-USDT");
+          co_await binance_api->subscribe("aggTrade", fmt::format("{}usdt", boost::to_lower_copy(AppOptions.coin())));
+          co_await ws_api->subscribe("trades", fmt::format("{}-USDT", boost::to_upper_copy(AppOptions.coin())));
 
-          boost::asio::co_spawn(io_context, ws_api.exec(), boost::asio::detached);
+          boost::asio::co_spawn(io_context, binance_api->exec(), boost::asio::detached);
+          boost::asio::co_spawn(io_context, ws_api->exec(), boost::asio::detached);
+          boost::asio::co_spawn(io_context, s.run(), boost::asio::detached);
         } catch (const boost::system::system_error& e) {
           LOG(ERROR) << "System Error: " << e.what();
         } catch (const std::exception& e) {

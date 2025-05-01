@@ -42,6 +42,17 @@ private:
   std::string m_passphrase;
 };
 
+class ConfigWeWork : public ConfigTree {
+public:
+  ConfigWeWork(std::shared_ptr<ptree> pt) : ConfigTree({"wework"}, pt) {
+    m_key = this->get<std::string>("key");
+  };
+
+  std::string key() const { return m_key; }
+private:
+  std::string m_key;
+};
+
 class ConfigCommon : public ConfigTree {
 public:
   ConfigCommon(std::shared_ptr<ptree> pt) : ConfigTree("common", pt) {
@@ -79,10 +90,18 @@ public:
     }
     return m_common_config;
   }
+
+  std::shared_ptr<ConfigWeWork> wework() {
+    if (!m_wework_config) {
+      m_wework_config = std::make_shared<ConfigWeWork>(m_ptree);
+    }
+    return m_wework_config;
+  }
 private:
   std::shared_ptr<ptree> m_ptree;
   std::shared_ptr<ConfigOkx> m_okx_config;
   std::shared_ptr<ConfigCommon> m_common_config;
+  std::shared_ptr<ConfigWeWork> m_wework_config;
 };
 
 using Config = Common::Singleton<ConfigImpl>;

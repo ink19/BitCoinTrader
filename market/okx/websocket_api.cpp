@@ -36,7 +36,7 @@ boost::asio::awaitable<int> Market::Okx::WebSocketApi::login() {
   LOG(INFO) << "Login request: " << boost::json::serialize(json_body);
   co_await m_ws_api_private->write(boost::json::serialize(json_body));
   
-  co_return ErrCode_OK;
+  co_return 0;
 }
 
 boost::asio::awaitable<int> Market::Okx::WebSocketApi::subscribe(const std::string& channel, const std::string& instId) {
@@ -54,7 +54,7 @@ boost::asio::awaitable<int> Market::Okx::WebSocketApi::subscribe(const std::stri
   LOG(INFO) << "Subscribe request: " << boost::json::serialize(json_body);
   co_await m_ws_api_public->write(boost::json::serialize(json_body));
 
-  co_return ErrCode_OK;
+  co_return 0;
 }
 
 boost::asio::awaitable<int> Market::Okx::WebSocketApi::connect_public() {
@@ -73,7 +73,7 @@ boost::asio::awaitable<int> Market::Okx::WebSocketApi::connect_public() {
     }
   }
 
-  co_return ErrCode_OK;
+  co_return 0;
 }
 
 boost::asio::awaitable<typename std::shared_ptr<Market::Okx::Detail::WsResponeBody>> Market::Okx::WebSocketApi::read_private() {
@@ -85,20 +85,20 @@ boost::asio::awaitable<typename std::shared_ptr<Market::Okx::Detail::WsResponeBo
 boost::asio::awaitable<std::shared_ptr<Market::Okx::Detail::WsResponeSubscribe>> Market::Okx::WebSocketApi::read_public() {
   auto read_data= co_await m_ws_api_public->read();
   auto respone_body = Common::DataReader<
-    std::shared_ptr<Detail::WsResponeSubscribe>
-  >::read(boost::json::parse(read_data));
+    Detail::WsResponeSubscribe
+  >::read_shared_ptr(boost::json::parse(read_data));
   co_return respone_body;
 }
 
 boost::asio::awaitable<int> Market::Okx::WebSocketApi::keep_alive() {
-  co_return ErrCode_OK;
+  co_return 0;
 }
 
 boost::asio::awaitable<void> Market::Okx::WebSocketApi::exec() {
   for (;;) {
     try {
       auto read_result = co_await read_public();
-      LOG(INFO) << "Received: " << Common::DataPrinter(*read_result);
+      // LOG(INFO) << "Received: " << Common::DataPrinter(*read_result);
       if (m_public_callback) {
         for (auto data : read_result->data) {
           co_await m_public_callback(data);

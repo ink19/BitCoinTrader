@@ -16,7 +16,7 @@ class OptionsImpl {
 public:
   OptionsImpl() = default;
 
-  int operator()(int argc, char* argv[]) {
+  ErrCode operator()(int argc, char* argv[]) {
     init_desc();
     try {
       po::store(po::parse_command_line(argc, argv, m_desc), m_vm);
@@ -24,20 +24,25 @@ public:
     } catch (const po::error& e) {
       std::cerr << "Error: " << e.what() << std::endl;
       std::cerr << m_desc << std::endl;
-      return ErrCode_Invalid_Param;
+      return ErrCode::Invalid_Param;
     }
-    return ErrCode_OK;
+    return ErrCode::OK;
   }
 
   void init_desc() {
     m_desc.add_options()
         ("help,h", "Show help message")
         ("config,c", po::value<std::string>()->default_value("config.ini"), "Path to config file")
-        ("log,l", po::value<std::string>(), "Path to log file");
+        ("log,l", po::value<std::string>(), "Path to log file")
+        ("coin,k", po::value<std::string>()->default_value("TRUMP"), "Coin name");
   }
 
   std::string config_file() {
     return m_vm["config"].as<std::string>();
+  }
+
+  std::string coin() {
+    return m_vm["coin"].as<std::string>();
   }
 
 private:

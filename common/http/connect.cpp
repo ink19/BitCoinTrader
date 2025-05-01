@@ -20,19 +20,20 @@ asio::awaitable<std::unique_ptr<asio::ip::tcp::socket>> Connect::connect() {
 
 asio::awaitable<std::unique_ptr<asio::ssl::stream<asio::ip::tcp::socket>>> Connect::connect_ssl() {
   auto executor = co_await asio::this_coro::executor;
-  asio::ssl::context ssl_ctx(asio::ssl::context::tlsv13_client);
-  ssl_ctx.set_options(asio::ssl::context::default_workarounds | asio::ssl::context::no_sslv2 | asio::ssl::context::single_dh_use | asio::ssl::context::no_sslv2 | asio::ssl::context::no_sslv3);
+  asio::ssl::context ssl_ctx(asio::ssl::context::tls_client);
+  ssl_ctx.set_options(asio::ssl::context::default_workarounds | asio::ssl::context::single_dh_use |
+    asio::ssl::context::no_sslv2 | asio::ssl::context::no_sslv3);
 
   auto socket = std::make_unique<asio::ssl::stream<asio::ip::tcp::socket>>(executor, ssl_ctx);
   co_await connect_base(socket->next_layer());
   if (!SSL_set_tlsext_host_name(socket->native_handle(), m_domain.c_str())) {
     throw boost::system::system_error(
-        boost::system::error_code(static_cast<int>(ErrCode_SSL_ERROR), RequestErrorCategory()),
+        boost::system::error_code(static_cast<int>(ErrCode::SSL_ERROR), RequestErrorCategory()),
         "Unable to set SNI hostname");
   }
   
-  LOG(INFO) << "Performing SSL handshake";
   co_await socket->async_handshake(asio::ssl::stream_base::client, asio::use_awaitable);
+  LOG(INFO) << "SSL handshaked";
   co_return socket;
 }
 
@@ -43,7 +44,7 @@ asio::awaitable<void> Connect::connect_base(asio::ip::tcp::socket &socket) {
 
   if (points.empty()) {
     throw boost::system::system_error(
-        boost::system::error_code(static_cast<int>(ErrCode_Resolve_Fail), RequestErrorCategory()),
+        boost::system::error_code(static_cast<int>(ErrCode::Resolve_Fail), RequestErrorCategory()),
         "Unable to get address");
   }
 

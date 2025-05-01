@@ -177,7 +177,50 @@ class DataReader {
       return T();
     }
   }
+
+  static std::shared_ptr<T> read_shared_ptr(const boost::json::value& obj) {
+    return DataReader<std::shared_ptr<T>>::read(obj);
+  }
 };
+
+template <typename T>
+class DataSerializer {
+public:
+  static boost::json::value write(const T& data) {
+    boost::json::value val;
+    if constexpr (is_shared_v<T>) {
+      using BaseFieldType = remove_shared_t<T>;
+      val = DataSerializer<BaseFieldType>::write(*data);
+    } else if constexpr (is_vector_v<T>) {
+      boost::json::array arr;
+      for (auto& item : data) {
+        arr.push_back(DataSerializer<typename T::value_type>::write(item));
+      }
+      val = arr;
+    } else if constexpr (std::is_same_v<T, dec_float>) {
+      val = boost::json::value(data.str());
+    } else if constexpr (std::is_base_of_v<T, std::string>) {
+      val = boost::json::value(data);
+    } else if constexpr (std::is_integral_v<T>) {
+      if constexpr (std::is_same_v<T, bool>) {
+        val = boost::json::value(data ? "true" : "false");
+      } else {
+        val = boost::json::value(data);
+      }
+    } else if constexpr (std::is_object_v<T>) {
+      boost::json::object obj;
+      boost::pfr::for_each_field(data, [&](auto&& field, auto index) {
+        using FieldType = std::decay_t<decltype(field)>;
+        obj[boost::pfr::get_name<index, T>()] = DataSerializer<FieldType>::write(field);
+      });
+      val = obj;
+    } else {
+      LOG(ERROR) << "Unsupported type: " << typeid(T).name();
+    }
+    return val;
+  }
+};
+
 
 // typedef std::string StringEnum;
 

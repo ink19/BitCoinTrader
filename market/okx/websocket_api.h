@@ -3,19 +3,20 @@
 
 #include <boost/asio/awaitable.hpp>
 #include <boost/json.hpp>
+#include <functional>
 #include <memory>
 #include <string>
-#include <websocket_api_detail.h>
-#include <functional>
 
 #include "WebSocket.h"
 #include "api.h"
+#include "websocket_api_detail.h"
 
 namespace Market {
 
 namespace Okx {
 
-typedef std::function<boost::asio::awaitable<int>(std::shared_ptr<Detail::WsResponeSubscribeData> )> WsResponeSubscribeCallback;
+typedef std::function<boost::asio::awaitable<int>(std::shared_ptr<Detail::WsResponeSubscribeData>)>
+    WsResponeSubscribeCallback;
 
 class WebSocketApi : private API {
  public:
@@ -26,9 +27,7 @@ class WebSocketApi : private API {
 
   boost::asio::awaitable<void> exec();
 
-  void set_public_callback(WsResponeSubscribeCallback callback) {
-    m_public_callback = callback;
-  }
+  void set_public_callback(WsResponeSubscribeCallback callback) { m_public_callback = callback; }
 
  private:
   boost::asio::awaitable<int> connect_public();

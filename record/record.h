@@ -13,6 +13,7 @@
 #include <cstddef>
 
 #include "type_traits.hpp"
+#include "errcode.h"
 
 namespace Record {
 
@@ -145,6 +146,84 @@ uint32_t serialize(asio::mutable_buffer& s, const N& o) {
     return dlen;
   }
 }
+
+template <typename T>
+uint32_t deserialize(asio::mutable_buffer& s, T& o) {
+  if constexpr (Common::is_shared_v<T>) {
+    if (!o) {
+      o = std::make_shared<Common::remove_shared_t<T>>();
+    }
+
+    return deserialize(s, *o.get());
+  } else {
+    uint32_t dlen = 0;
+    boost::pfr::for_each_field(o, [&](auto&& field, auto index) {
+      using FieldType = std::decay_t<decltype(field)>;
+      RecordProtocol *buff = (RecordProtocol *)((uint8_t *)s.data() + dlen);
+      buff->deserialize();
+      if constexpr (Common::is_vector_v<FieldType>) {
+        if (buff->type != SerializeTypeEnum_Vector) {
+          LOG(ERROR) << "type is not vector, field name: " << boost::pfr::get_name<index, T>();
+          return -1;
+        }
+
+        using BaseFieldType = FieldType::value_type;
+        uint32_t vec_buff_len = buff->data.vector.length;
+        int vec_read_len = 0;
+        while(vec_read_len >= vec_buff_len) {
+          BaseFieldType vec_item;
+          int32_t ret = deserialize(
+            asio::buffer((uint8_t *)(&(buff->ext_data)) + vec_read_len, vec_buff_len - vec_read_len), 
+          vec_item);
+          if (ret < 0) {
+            return ret;
+          }
+          field.push_back(vec_item);
+          vec_read_len += ret;
+        }
+
+        dlen += offsetof(RecordProtocol, ext_data) + vec_read_len;
+      } else if constexpr (std::is_same_v<FieldType, dec_float>) {
+        if (buff->type != SerializeTypeEnum_String) {
+          LOG(ERROR) << "type is not string, field name: " << boost::pfr::get_name<index, T>();
+          return -1;
+        }
+        auto s = std::string((char *)(&(buff->ext_data)), buff->data.string.length);
+        field = dec_float(s);
+        dlen += offsetof(RecordProtocol, ext_data) + buff->data.string.length;
+      } else if constexpr (std::is_base_of_v<FieldType, std::string>) {
+        if (buff->type != SerializeTypeEnum_String) {
+          LOG(ERROR) << "type is not string, field name: " << boost::pfr::get_name<index, T>();
+          return -1;
+        }
+        field = std::string((char *)(&(buff->ext_data)), buff->data.string.length);
+        dlen += offsetof(RecordProtocol, ext_data) + buff->data.string.length;
+      } else if constexpr (std::is_integral_v<FieldType>) {
+        if (buff->type != SerializeTypeEnum_Integer) {
+          LOG(ERROR) << "type is not integer, field name: " << boost::pfr::get_name<index, T>();
+          return -1;
+        }
+        field = buff->data.integer;
+        dlen += offsetof(RecordProtocol, ext_data);
+      } else if constexpr (std::is_object_v<FieldType>) {
+        if (buff->type != SerializeTypeEnum_Struct) {
+          LOG(ERROR) << "type is not struct, field name: " << boost::pfr::get_name<index, T>();
+          return -1;
+        }
+
+        uint32_t length = deserialize(asio::buffer(
+          (uint8_t *)(&(buff->ext_data)), buff->data.struct_.length),
+          field
+        );
+        dlen += offsetof(RecordProtocol, ext_data) + length;
+      } else {
+        LOG(ERROR) << "not support type";
+      }
+    });
+    return dlen;
+  }
+}
+
 
 class Record {
  public:
