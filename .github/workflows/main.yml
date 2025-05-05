@@ -9,8 +9,8 @@ jobs:
   build-and-release:
     runs-on: ubuntu-latest
     permissions:
-      contents: write  # ✅ 关键权限设置必须正确
-      packages: read    # ⚠️ 如果使用GitHub Packages可能需要
+      contents: write
+      packages: write
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -40,23 +40,13 @@ jobs:
           xmake package -o release/  # 打包生成物到release目录
           ls -lh release/  # 确认打包文件存在
   
-      - name: Create Release
-        id: create_release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: ${{ github.ref_name }}  # 从tag v1.0.0获取版本
-          release_name: ${{ github.ref_name }}
-          draft: false
-          prerelease: false
-  
       - name: Upload Release Asset
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        uses: softprops/action-gh-release@v2
         with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./release/packages/b/bitcointrader/linux/x86_64/debug/bin/*  # 上传所有tar.gz文件
-          asset_name: ${{ github.ref_name }}
-          asset_content_type: application/binary
+          files: ./release/packages/b/bitcointrader/linux/x86_64/debug/bin/*  # 上传所有tar.gz文件
+          name: BitTrader-${{ github.ref_name }}-linux-amd64
+          tag_name: ${{ github.ref_name }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+          draft: false
+          prerelease: true
+          make_latest: true
