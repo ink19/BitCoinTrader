@@ -14,21 +14,17 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      # 新增缓存步骤（必须放在xmake安装前）
-      - name: Cache Xmake Packages
-        uses: actions/cache@v3
-        with:
-          path: |
-            ~/.xmake
-            ~/.xmake/packages
-          key: ${{ runner.os }}-xmake-${{ hashFiles('**/xmake.lua') }}
-          restore-keys: |
-            ${{ runner.os }}-xmake-
 
       - name: setup xmake
         uses: xmake-io/github-action-setup-xmake@v1
         with:
-          xmake-version: latest
+          xmake-version: '2.9.9'
+          actions-cache-folder: '.xmake-cache'
+          actions-cache-key: 'ubuntu-ci'
+          package-cache: true
+          package-cache-key: 'ubuntu-ci'
+          project-path: './'
+          build-cache: true
 
       - name: Build Project (Release)
         run: |
