@@ -6,8 +6,11 @@ on:
       - 'v*'  # 当推送v开头的tag时触发
 
 jobs:
-  add-label:
+  build-and-release:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write  # ✅ 关键权限设置必须正确
+      packages: read    # ⚠️ 如果使用GitHub Packages可能需要
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
