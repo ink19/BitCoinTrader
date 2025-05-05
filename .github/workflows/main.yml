@@ -18,8 +18,8 @@ jobs:
 
       - name: Build Project (Release)
         run: |
-          xmake config --mode=release
-          xmake build -v
+          xmake config --mode=release -y
+          xmake build -v -y
   
       - name: Package Artifacts
         run: |
