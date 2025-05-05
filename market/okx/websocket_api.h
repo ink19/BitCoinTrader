@@ -10,24 +10,22 @@
 #include "WebSocket.h"
 #include "api.h"
 #include "websocket_api_detail.h"
+#include "market/public_api.h"
 
 namespace Market {
 
 namespace Okx {
 
-typedef std::function<boost::asio::awaitable<int>(std::shared_ptr<Detail::WsResponeSubscribeData>)>
-    WsResponeSubscribeCallback;
-
-class WebSocketApi : private API {
+class WebSocketApi : private API, public PublicApi {
  public:
   WebSocketApi(const std::string& api_key, const std::string& secret_key, const std::string& passphrase);
 
   boost::asio::awaitable<int> login();
-  boost::asio::awaitable<int> subscribe(const std::string& channel, const std::string& instId);
 
-  boost::asio::awaitable<void> exec();
-
-  void set_public_callback(WsResponeSubscribeCallback callback) { m_public_callback = callback; }
+  // PublicApi
+  boost::asio::awaitable<int> subscribe_trades(const std::string& channel, const std::string& instId) override;
+  boost::asio::awaitable<int> exec() override;
+  void set_trades_callback(Market::TradesCallback callback) override { m_public_callback = callback; }
 
  private:
   boost::asio::awaitable<int> connect_public();
@@ -40,7 +38,7 @@ class WebSocketApi : private API {
 
   std::unique_ptr<Common::WebSocket> m_ws_api_public;
   std::vector<std::shared_ptr<Detail::WsRequestArgsParamSubscribe>> m_public_subscribed_args;
-  WsResponeSubscribeCallback m_public_callback;
+  Market::TradesCallback m_public_callback;
 };
 
 }  // namespace Okx

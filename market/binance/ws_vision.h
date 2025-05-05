@@ -7,23 +7,21 @@
 #include <string>
 
 #include "WebSocket.h"
-#include "data_detail.h"
+#include "market/public_api.h"
+#include <map>
 
 namespace Market {
 namespace Binance {
 
 namespace asio = boost::asio;
 
-typedef std::function<boost::asio::awaitable<int>(std::shared_ptr<WsApiAggTrade>)>
-    WsApiAggTradeCallback;
-
-class BinanceVisionAPI {
+class BinanceVisionAPI : public PublicApi {
  public:
   BinanceVisionAPI() {}
-  asio::awaitable<int> subscribe(const std::string& channel, const std::string& instId);
-  asio::awaitable<void> exec();
+  asio::awaitable<int> subscribe_trades(const std::string& channel, const std::string& instId) override;
+  asio::awaitable<int> exec() override;
 
-  void set_agg_trade_callback(WsApiAggTradeCallback callback) { m_agg_trade_callback = callback; }
+  void set_trades_callback(TradesCallback callback) override { m_agg_trade_callback = callback; }
 
  private:
   asio::awaitable<int> connect();
@@ -32,7 +30,8 @@ class BinanceVisionAPI {
   std::unique_ptr<Common::WebSocket> m_vision_ws;
   std::vector<std::string> m_channels;
 
-  WsApiAggTradeCallback m_agg_trade_callback;
+  TradesCallback m_agg_trade_callback;
+  std::map<std::string, std::string> m_inst_id_map;
 };
 
 }  // namespace Binance

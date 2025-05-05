@@ -39,7 +39,7 @@ boost::asio::awaitable<int> Market::Okx::WebSocketApi::login() {
   co_return 0;
 }
 
-boost::asio::awaitable<int> Market::Okx::WebSocketApi::subscribe(const std::string& channel, const std::string& instId) {
+boost::asio::awaitable<int> Market::Okx::WebSocketApi::subscribe_trades(const std::string& channel, const std::string& instId) {
   if (m_ws_api_public.get() == nullptr) {
     co_await connect_public();
   }
@@ -59,7 +59,7 @@ boost::asio::awaitable<int> Market::Okx::WebSocketApi::subscribe(const std::stri
 
 boost::asio::awaitable<int> Market::Okx::WebSocketApi::connect_public() {
   auto ctx = co_await boost::asio::this_coro::executor;
-  m_ws_api_public = std::make_unique<Common::WebSocket>("ws://ws.okx.com:8443/ws/v5/public");
+  m_ws_api_public = std::make_unique<Common::WebSocket>("wss://ws.okx.com:8443/ws/v5/public");
   co_await m_ws_api_public->connect();
   LOG(INFO) << "Connected to WebSocket server";
 
@@ -94,14 +94,14 @@ boost::asio::awaitable<int> Market::Okx::WebSocketApi::keep_alive() {
   co_return 0;
 }
 
-boost::asio::awaitable<void> Market::Okx::WebSocketApi::exec() {
+boost::asio::awaitable<int> Market::Okx::WebSocketApi::exec() {
   for (;;) {
     try {
       auto read_result = co_await read_public();
       // LOG(INFO) << "Received: " << Common::DataPrinter(*read_result);
       if (m_public_callback) {
         for (auto data : read_result->data) {
-          co_await m_public_callback(data);
+          co_await m_public_callback(mapping(data));
         }
       }
     } catch (const boost::beast::system_error& e) {
@@ -113,5 +113,5 @@ boost::asio::awaitable<void> Market::Okx::WebSocketApi::exec() {
       co_await connect_public();
     }
   }
-  co_return;
+  co_return 0;
 }

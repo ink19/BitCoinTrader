@@ -219,11 +219,18 @@ public:
     }
     return val;
   }
+  
+  static boost::json::value operator()(const T& data) {
+    return write(data);
+  }
 };
 
+template <typename T>
+inline boost::json::value JsonSerialize(const T& data) {
+  return DataSerializer<T>()(data);
+}
 
 // typedef std::string StringEnum;
-
 class StringEnum : public std::string {
 public:
   StringEnum() = default;

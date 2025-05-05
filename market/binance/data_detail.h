@@ -5,6 +5,9 @@
 #include <string>
 #include <vector>
 
+#include "market/market_data.h"
+#include "mapping.hpp"
+
 namespace Market {
 namespace Binance {
 
@@ -31,6 +34,18 @@ class WsApiAggTrade {
   bool m;  // 买方是否是做市方。如true，则此次成交是一个主动卖出单，否则是一个主动买入单。
   bool M;  // 请忽略该字段
 };
+
+using TradeData = Market::TradeData;
+MAPPER_TYPE(WsApiAggTrade, TradeData)
+MAPPER_TYPE_ITEM(s, inst_id)
+MAPPER_TYPE_ITEM_WITH_FUNC(a, trade_id, std::to_string)
+MAPPER_TYPE_ITEM_WITH_FUNC(m, side, std::to_string)
+MAPPER_TYPE_ITEM(p, px)
+MAPPER_TYPE_ITEM(q, sz)
+MAPPER_TYPE_ITEM(q, count)
+MAPPER_TYPE_ITEM(T, ts)
+MAPPER_TYPE_END(WsResponeSubscribeData, TradeData)
+
 
 }  // namespace Binance
 }  // namespace Market

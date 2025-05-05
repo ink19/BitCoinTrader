@@ -14,7 +14,7 @@ asio::awaitable<int> WeWorkAPI::send(std::string msg) {
   send_obj.text.content = msg;
 
   auto req = Common::HttpRequest(
-    m_uri, "POST", boost::json::serialize(Common::DataSerializer<WeWorkData>::write(send_obj))
+    m_uri, "POST", boost::json::serialize(Common::JsonSerialize(send_obj))
   );
 
   auto resp = co_await req.request();

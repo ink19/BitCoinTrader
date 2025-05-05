@@ -42,14 +42,11 @@ class HttpRequest {
 
     template<typename SocketType>
     asio::awaitable<std::string> do_request(std::unique_ptr<SocketType> conn, const http::request<http::string_body> &req) {
-      LOG(INFO) << "Request: " << req;
       co_await http::async_write(*conn, req, asio::use_awaitable);
-      LOG(INFO) << "Request sent";
 
       beast::flat_buffer buffer;
       http::response<http::string_body> res;
       co_await http::async_read(*conn, buffer, res, asio::use_awaitable);
-      LOG(INFO) << "Response received";
       
       if (res.result() != http::status::ok) {
         throw boost::system::system_error(

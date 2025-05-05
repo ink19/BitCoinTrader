@@ -21,8 +21,8 @@ asio::awaitable<std::unique_ptr<asio::ip::tcp::socket>> Connect::connect() {
 asio::awaitable<std::unique_ptr<asio::ssl::stream<asio::ip::tcp::socket>>> Connect::connect_ssl() {
   auto executor = co_await asio::this_coro::executor;
   asio::ssl::context ssl_ctx(asio::ssl::context::tls_client);
-  ssl_ctx.set_options(asio::ssl::context::default_workarounds | asio::ssl::context::single_dh_use |
-    asio::ssl::context::no_sslv2 | asio::ssl::context::no_sslv3);
+  ssl_ctx.set_options(asio::ssl::context::default_workarounds | asio::ssl::context::single_dh_use);
+  ssl_ctx.set_default_verify_paths(); // 使用系统证书库
 
   auto socket = std::make_unique<asio::ssl::stream<asio::ip::tcp::socket>>(executor, ssl_ctx);
   co_await connect_base(socket->next_layer());
@@ -33,7 +33,6 @@ asio::awaitable<std::unique_ptr<asio::ssl::stream<asio::ip::tcp::socket>>> Conne
   }
   
   co_await socket->async_handshake(asio::ssl::stream_base::client, asio::use_awaitable);
-  LOG(INFO) << "SSL handshaked";
   co_return socket;
 }
 
@@ -54,3 +53,7 @@ asio::awaitable<void> Connect::connect_base(asio::ip::tcp::socket &socket) {
 }
 
 }
+
+
+// 2606:4700:4400::ac40:9052
+// 2606:4700:4400::ac40:9052

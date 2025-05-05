@@ -7,6 +7,8 @@
 #include <boost/multiprecision/cpp_dec_float.hpp>
 #include <memory>
 #include <boost/serialization/serialization.hpp>
+#include "market/market_data.h"
+#include "mapping.hpp"
 
 namespace Market {
 
@@ -34,6 +36,14 @@ class WsRequestArgsParamLogin : public WsRequestArgsParam {
   std::string m_passphrase;
   std::string m_sign;
   std::string m_timestamp;
+};
+
+class WsRequestArgsParamLoginData {
+public:
+  std::string apiKey;
+  std::string passphrase;
+  std::string sign;
+  std::string timestamp;
 };
 
 class WsRequestArgsParamSubscribe : public WsRequestArgsParam {
@@ -146,11 +156,23 @@ public:
   std::string instId;
   std::string tradeId;
   std::string side;
-  dec_float px,
-  sz,
-  count;
+  dec_float px;
+  dec_float sz;
+  dec_float count;
   int64_t ts;
 };
+
+using TradeData = Market::TradeData;
+MAPPER_TYPE(WsResponeSubscribeData, TradeData)
+MAPPER_TYPE_ITEM(instId, inst_id)
+MAPPER_TYPE_ITEM(tradeId, trade_id)
+MAPPER_TYPE_ITEM(side, side)
+MAPPER_TYPE_ITEM(px, px)
+MAPPER_TYPE_ITEM(sz, sz)
+MAPPER_TYPE_ITEM(count, count)
+MAPPER_TYPE_ITEM(ts, ts)
+MAPPER_TYPE_END(WsResponeSubscribeData, TradeData)
+
 
 class WsResponeSubscribe {
 public:

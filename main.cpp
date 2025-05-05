@@ -26,21 +26,28 @@ int main(int argc, char* argv[]) {
   LOG(INFO) << "CONFIG FILE: " << AppOptions.config_file();
   AppConfig.init(AppOptions.config_file());
 
-  auto ws_api = std::make_shared<Market::Okx::WebSocketApi>(AppConfig.okx()->api_key(), AppConfig.okx()->secret_key(),
+  std::shared_ptr<Market::PublicApi> ws_api = std::make_shared<Market::Okx::WebSocketApi>(AppConfig.okx()->api_key(), AppConfig.okx()->secret_key(),
                                                             AppConfig.okx()->passphrase());
-  auto binance_api = std::make_shared<Market::Binance::BinanceVisionAPI>();
+  std::shared_ptr<Market::PublicApi> binance_api = std::make_shared<Market::Binance::BinanceVisionAPI>();
   auto notice_api = std::make_shared<Notice::WeWork::WeWorkAPI>(AppConfig.wework()->key());
   boost::asio::io_context io_context;
 
   Service::Compare::CompareSerivce s(binance_api, ws_api, notice_api);
 
+  std::vector<std::string> inst_ids = {};
+  boost::algorithm::split(inst_ids, AppOptions.coin(), boost::is_any_of(","));
+  for (auto& inst_id : inst_ids) {
+    inst_id = fmt::format("{}-USDT", boost::to_upper_copy(inst_id));
+  }
+
   boost::asio::co_spawn(
       io_context,
       [&]() -> boost::asio::awaitable<void> {
         try {
-          co_await binance_api->subscribe("aggTrade", fmt::format("{}usdt", boost::to_lower_copy(AppOptions.coin())));
-          co_await ws_api->subscribe("trades", fmt::format("{}-USDT", boost::to_upper_copy(AppOptions.coin())));
-
+          for (auto& inst_id : inst_ids) {
+            co_await binance_api->subscribe_trades("trades", inst_id);
+            co_await ws_api->subscribe_trades("trades", inst_id);
+          }
           boost::asio::co_spawn(io_context, binance_api->exec(), boost::asio::detached);
           boost::asio::co_spawn(io_context, ws_api->exec(), boost::asio::detached);
           boost::asio::co_spawn(io_context, s.run(), boost::asio::detached);
