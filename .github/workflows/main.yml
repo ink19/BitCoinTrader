@@ -1,3 +1,48 @@
-uses: xmake-io/github-action-setup-xmake@v1
-with:
-  xmake-version: latest
+name: Build and Release
+
+on:
+  push:
+    tags:
+      - 'v*'  # 当推送v开头的tag时触发
+
+jobs:
+  add-label:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: setup xmake
+        uses: xmake-io/github-action-setup-xmake@v1
+        with:
+          xmake-version: latest
+
+      - name: Build Project (Release)
+        run: |
+          xmake config --mode=release
+          xmake build -v
+  
+      - name: Package Artifacts
+        run: |
+          xmake package -o release/  # 打包生成物到release目录
+          ls -lh release/  # 确认打包文件存在
+  
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref_name }}  # 从tag v1.0.0获取版本
+          release_name: ${{ github.ref_name }}
+          draft: false
+          prerelease: false
+  
+      - name: Upload Release Asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./release/*.tar.gz  # 上传所有tar.gz文件
+          asset_name: ${{ github.ref_name }}.tar.gz
+          asset_content_type: application/gzip
