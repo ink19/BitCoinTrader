@@ -46,6 +46,39 @@ MAPPER_TYPE_ITEM(q, count)
 MAPPER_TYPE_ITEM(T, ts)
 MAPPER_TYPE_END(WsResponeSubscribeData, TradeData)
 
+class WsApiDepth {
+public:
+  int64_t lastUpdateId;
+  std::vector<std::vector<dec_float>> bids, asks;
+};
+
+using DepthData = Market::DepthData;
+using DepthDataItem = Market::DepthDataItem;
+
+inline std::shared_ptr<DepthDataItem> translate_depth_data_item(const std::vector<dec_float>& ask) {
+  if (ask.size() < 2) {
+    return nullptr;
+  }
+  auto res = std::make_shared<DepthDataItem>();
+  res->price = ask[0];
+  res->size = ask[1];
+  return res;
+}
+
+MAPPER_TYPE(WsApiDepth, DepthData)
+MAPPER_TYPE_ITEM(lastUpdateId, ts)
+MAPPER_TYPE_ITEM_WITH_FUNC(asks, asks, [](auto& ask) {
+  std::vector<std::shared_ptr<DepthDataItem>> result;
+  std::transform(ask.begin(), ask.end(), std::back_inserter(result), translate_depth_data_item);
+  return result;
+})
+MAPPER_TYPE_ITEM_WITH_FUNC(bids, bids, [](auto& bid) {
+  std::vector<std::shared_ptr<DepthDataItem>> result;
+  std::transform(bid.begin(), bid.end(), std::back_inserter(result), translate_depth_data_item);
+  return result;
+})
+MAPPER_TYPE_END(WsResponeSubscribeData, DepthData)
+
 
 }  // namespace Binance
 }  // namespace Market

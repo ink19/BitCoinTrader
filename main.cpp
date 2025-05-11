@@ -28,6 +28,7 @@ int main(int argc, char* argv[]) {
   std::shared_ptr<Market::PublicTradeApi> ws_api = std::make_shared<Market::Okx::WsPublicApi>();
   std::shared_ptr<Market::PublicTradeApi> binance_api = std::make_shared<Market::Binance::BinanceVisionAPI>();
   std::shared_ptr<Market::PublicDepthApi> okx_depth_api = std::make_shared<Market::Okx::WsPublicApi>();
+  std::shared_ptr<Market::PublicDepthApi> binance_depth_api = std::make_shared<Market::Binance::BinanceVisionAPI>();
 
   auto notice_api = std::make_shared<Notice::WeWork::WeWorkAPI>(AppConfig.wework()->key());
   boost::asio::io_context io_context;
@@ -44,6 +45,7 @@ int main(int argc, char* argv[]) {
     binance_api->subscribe_trades("trades", inst_id);
     ws_api->subscribe_trades("trades", inst_id);
     okx_depth_api->subscribe_depth("books5", inst_id);
+    binance_depth_api->subscribe_depth("books5", inst_id);
   }
 
   boost::asio::co_spawn(
@@ -54,6 +56,7 @@ int main(int argc, char* argv[]) {
           // boost::asio::co_spawn(io_context, ws_api->exec(), boost::asio::detached);
           // boost::asio::co_spawn(io_context, s.run(), boost::asio::detached);
           boost::asio::co_spawn(io_context, okx_depth_api->exec(), boost::asio::detached);
+          boost::asio::co_spawn(io_context, binance_depth_api->exec(), boost::asio::detached);
         } catch (const boost::system::system_error& e) {
           LOG(ERROR) << "System Error: " << e.what();
         } catch (const std::exception& e) {

@@ -17,6 +17,12 @@ namespace Okx {
 template <typename T>
 using awaitable = boost::asio::awaitable<T>;
 
+class OkxDepthData {
+public:
+  std::shared_ptr<Market::DepthData> depth;
+  int64_t seqId;
+};
+
 class WsPublicApi : public PublicTradeApi, public PublicDepthApi {
  public:
   WsPublicApi(int retry_times = 3);
@@ -35,6 +41,9 @@ class WsPublicApi : public PublicTradeApi, public PublicDepthApi {
   virtual awaitable<std::string> read_depth_data() override;
   virtual awaitable<std::shared_ptr<DepthData>> parse_depth_data(const std::string& data) override;
   virtual awaitable<int> depth_data_handle(std::shared_ptr<Market::DepthData> data) override;
+  std::shared_ptr<OkxDepthData> m_depth;
+  bool depth_checksum(int checksum);
+
 
   awaitable<int> connect_trades();
   awaitable<int> connect_depth();

@@ -21,55 +21,8 @@ awaitable<int> PublicDepthApi::exec_depth_data(const std::string& data_str) {
   std::lock_guard<std::shared_mutex> guard(m_lock);
   if (res_depth->data_type == DepthDataTypeSnapshot) {
     m_depth_data = res_depth;
-  } else {
-    m_depth_data->ts = res_depth->ts;
-
-    for (auto& item : res_depth->asks) {
-      m_depth_data->asks.push_back(item);
-    }
-
-    for (auto& item : res_depth->bids) {
-      m_depth_data->bids.push_back(item);
-    }
-    // 排序
-    std::sort(m_depth_data->asks.begin(), m_depth_data->asks.end(),
-              [](const auto& a, const auto& b) { return a->price < b->price; });
-
-    std::sort(m_depth_data->bids.begin(), m_depth_data->bids.end(),
-              [](const auto& a, const auto& b) { return a->price > b->price; });
-
-    // 合并相同价格
-    for (auto it = m_depth_data->asks.begin(); it != m_depth_data->asks.end();) {
-      auto it2 = it + 1;
-      while (it2 != m_depth_data->asks.end() && (*it)->price == (*it2)->price) {
-        (*it)->size += (*it2)->size;
-        it2 = m_depth_data->asks.erase(it2);
-      }
-      it = it2;
-    }
-
-    for (auto it = m_depth_data->bids.begin(); it != m_depth_data->bids.end();) {
-      auto it2 = it + 1;
-      while (it2 != m_depth_data->bids.end() && (*it)->price == (*it2)->price) {
-        (*it)->size += (*it2)->size;
-        it2 = m_depth_data->bids.erase(it2);
-      }
-      it = it2;
-    }
-
-    // 撮合交易
-    while (!m_depth_data->asks.empty() && !m_depth_data->bids.empty() &&
-           m_depth_data->asks[0]->price > m_depth_data->bids[0]->price) {
-      auto& ask = m_depth_data->asks[0];
-      auto& bid = m_depth_data->bids[0];
-      if (ask->size > bid->size) {
-        ask->size -= bid->size;
-        m_depth_data->bids.erase(m_depth_data->bids.begin());
-      } else {
-        bid->size -= ask->size;
-        m_depth_data->asks.erase(m_depth_data->asks.begin());
-      }
-    }
+  } else { // 不应该出现其他类型
+    throw std::runtime_error("Unknown DepthDataType");
   }
 
   co_await depth_data_handle(res_depth);

@@ -157,6 +157,8 @@ class DataReader {
         } else {
           data = dec_float(0);
         }
+      } else {
+        data = dec_float(0);
       }
     } else if constexpr (is_vector_v<T>) {
       if (jvalue.is_array()) {
