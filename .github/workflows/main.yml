@@ -39,7 +39,7 @@ jobs:
       - name: Upload Release Asset
         uses: softprops/action-gh-release@v2
         with:
-          files: ./release/packages/b/bitcointrader/linux/x86_64/debug/bin/*  # 上传所有tar.gz文件
+          files: ./release/packages/b/bitcointrader/linux/x86_64/release/bin/*  # 上传所有tar.gz文件
           name: BitTrader-${{ github.ref_name }}-linux-amd64
           tag_name: ${{ github.ref_name }}
           token: ${{ secrets.GITHUB_TOKEN }}
