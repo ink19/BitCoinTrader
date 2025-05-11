@@ -1,14 +1,16 @@
 #ifndef __MARKET_OKX_WEBSOCKET_API_DETAIL_H__
 #define __MARKET_OKX_WEBSOCKET_API_DETAIL_H__
 
+#include <algorithm>
 #include <boost/json.hpp>
 #include <boost/json/array.hpp>
 #include <boost/json/object.hpp>
 #include <boost/multiprecision/cpp_dec_float.hpp>
-#include <memory>
 #include <boost/serialization/serialization.hpp>
-#include "market/market_data.h"
+#include <memory>
+
 #include "mapping.hpp"
+#include "market/market_data.h"
 
 namespace Market {
 
@@ -18,141 +20,35 @@ namespace Detail {
 
 namespace mp = boost::multiprecision;
 using dec_float = mp::cpp_dec_float_100;
-  
 
-class WsRequestArgsParam {
+class WsRequestArgsParamSubscribe {
  public:
-  virtual boost::json::value Json() const = 0;
-};
-
-class WsRequestArgsParamLogin : public WsRequestArgsParam {
- public:
-  WsRequestArgsParamLogin(const std::string& api_key, const std::string& passphrase, const std::string& sign,
-                        const std::string& timestamp);
-  boost::json::value Json() const override;
-
- private:
-  std::string m_api_key;
-  std::string m_passphrase;
-  std::string m_sign;
-  std::string m_timestamp;
-};
-
-class WsRequestArgsParamLoginData {
-public:
-  std::string apiKey;
-  std::string passphrase;
-  std::string sign;
-  std::string timestamp;
-};
-
-class WsRequestArgsParamSubscribe : public WsRequestArgsParam {
- public:
-  WsRequestArgsParamSubscribe(const std::string& channel = "", const std::string& inst_type = "",
-                            const std::string& inst_family = "", const std::string& inst_id = "");
-
-  boost::json::value Json() const override;
-
- private:
-  std::string m_channel;
-  std::string m_inst_id;
-  std::string m_inst_type;
-  std::string m_inst_family;
-};
-
-enum WsRequestOpEnum {
-  OpNONE = 0,
-  OpLOING = 1,
-  OpSUBSCRIBE = 2,
-  OpUNSUBSCRIBE = 3,
-};
-
-class WsRequestBody {
- public:
-  WsRequestBody(WsRequestOpEnum op, std::vector<std::shared_ptr<WsRequestArgsParam>> args) : m_op(op), m_args(args) {}
-  WsRequestBody(WsRequestOpEnum op, std::shared_ptr<WsRequestArgsParam> args) : m_op(op) { m_args.push_back(args); }
-
-  boost::json::value Json() const;
-
- private:
-  std::string op_string(WsRequestOpEnum op) const;
-
-  WsRequestOpEnum m_op;
-  std::vector<std::shared_ptr<WsRequestArgsParam>> m_args;
-};
-
-enum WsResponeEventEnum {
-  EventNONE = 0,
-  EventLogin = 1,
-  EventSubscribe = 2,
-  EventUnSubscribe = 3,
-  EventNotice = 4,
-  EventError = 5,
-};
-
-enum WsResponeCodeEnum {
-  CodeOK = 0,
-};
-
-class WsResponeArgsParam {
-  public:
-    WsResponeArgsParam() = default;
-    WsResponeArgsParam(WsResponeEventEnum event) : m_event(event) {}
-    WsResponeEventEnum Type();
-    static std::shared_ptr<WsResponeArgsParam> Create(WsResponeEventEnum event, const boost::json::value& data);
-  private:
-    WsResponeEventEnum m_event;
-};
-
-class WsResponeArgsParamSubscribe : public WsResponeArgsParam {
-  public:
-    WsResponeArgsParamSubscribe(const boost::json::value& data);
-    
-  private:
-    std::string m_channel;
-    std::string m_inst_id;
-    std::string m_inst_type;
-    std::string m_inst_family;
-};
-
-class WsResponeBody {
-  public:
-    WsResponeBody(const boost::json::value& data);
-    WsResponeBody(const std::string& data);
-    WsResponeEventEnum event() const { return m_event; }
-
-    friend std::ostream& operator<<(std::ostream& os, const WsResponeBody& respone) {
-      os << respone.string();
-      return os;
-    }
-
-    friend std::ostream& operator<<(std::ostream& os, const std::shared_ptr<WsResponeBody> respone) {
-      os << respone->string();
-      return os;
-    }
-
-    std::string string() const;
-  protected:
-    WsResponeEventEnum m_event;
-    WsResponeCodeEnum m_code;
-    std::string m_msg;
-    std::string m_conn_id;
-    std::vector<std::shared_ptr<WsResponeArgsParam>> args;
-    boost::json::value m_data;
-    bool m_init = false;
-    WsResponeEventEnum event_transform(const std::string& event);
-    void read_args(const boost::json::value& data);
-    void read_args(const boost::json::array& data);
-};
-
-class WsResponeSubscribeArg {
-public:
   std::string channel;
   std::string instId;
 };
 
+class WsRequestBody {
+ public:
+  std::string op;
+  std::vector<std::shared_ptr<WsRequestArgsParamSubscribe>> args;
+};
+
+class WsResponeArg {
+ public:
+  std::string channel;
+  std::string instId;
+};
+
+class WsResponeSubscribeData;
+
+class WsResponeBody {
+ public:
+  WsResponeArg arg;
+  std::vector<std::shared_ptr<WsResponeSubscribeData>> data;
+};
+
 class WsResponeSubscribeData {
-public:
+ public:
   std::string instId;
   std::string tradeId;
   std::string side;
@@ -173,12 +69,54 @@ MAPPER_TYPE_ITEM(count, count)
 MAPPER_TYPE_ITEM(ts, ts)
 MAPPER_TYPE_END(WsResponeSubscribeData, TradeData)
 
-
-class WsResponeSubscribe {
-public:
-  WsResponeSubscribeArg arg;
-  std::vector<std::shared_ptr<WsResponeSubscribeData>> data;
+class WsResponeDepthData {
+ public:
+  std::vector<std::vector<dec_float>> asks;
+  std::vector<std::vector<dec_float>> bids;
+  int64_t ts;
+  int64_t checksum;
+  int64_t prevSeqId;
+  int64_t seqId;
 };
+
+using DepthData = Market::DepthData;
+using DepthDataItem = Market::DepthDataItem;
+
+inline std::shared_ptr<DepthDataItem> translate_depth_data_item(const std::vector<dec_float>& ask) {
+  if (ask.size() != 4) {
+    return nullptr;
+  }
+  auto res = std::make_shared<DepthDataItem>();
+  res->price = ask[0];
+  res->size = ask[1];
+  res->order_count = ask[2].convert_to<int64_t>();
+  return res;
+}
+
+MAPPER_TYPE(WsResponeDepthData, DepthData)
+MAPPER_TYPE_ITEM(ts, ts)
+MAPPER_TYPE_ITEM_WITH_FUNC(asks, asks, [](auto& ask) {
+  std::vector<std::shared_ptr<DepthDataItem>> result;
+  std::transform(ask.begin(), ask.end(), std::back_inserter(result), translate_depth_data_item);
+  return result;
+})
+MAPPER_TYPE_ITEM_WITH_FUNC(bids, bids, [](auto& bid) {
+  std::vector<std::shared_ptr<DepthDataItem>> result;
+  std::transform(bid.begin(), bid.end(), std::back_inserter(result), translate_depth_data_item);
+  return result;
+})
+MAPPER_TYPE_END(WsResponeDepthData, DepthData)
+
+template <typename T>
+class WsRespone {
+ public:
+  WsResponeArg arg;
+  std::string action;
+  std::vector<std::shared_ptr<T>> data;
+};
+
+typedef WsRespone<WsResponeSubscribeData> WsResponeSubscribe;
+typedef WsRespone<WsResponeDepthData> WsResponeDepth;
 
 }  // namespace Detail
 

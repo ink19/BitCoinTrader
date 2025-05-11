@@ -10,6 +10,7 @@ enum class ErrCode {
   API_Return_Error = -3,
   SSL_ERROR = -4,
   Deserialize_Fail = -5,
+  Connect_Fail = -6,
 };
 
 static std::string GetErrCodeString(ErrCode err) {

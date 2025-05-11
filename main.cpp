@@ -1,7 +1,6 @@
 #include <fmt/core.h>
 #include <glog/logging.h>
 
-#include <algorithm>
 #include <boost/algorithm/string.hpp>
 #include <boost/asio.hpp>
 #include <boost/asio/detached.hpp>
@@ -12,9 +11,9 @@
 #include "binance/ws_vision.h"
 #include "compare/compare.h"
 #include "config.h"
-#include "okx/websocket_api.h"
 #include "options.h"
 #include "wework/wework.h"
+#include "okx/ws_public_api.h"
 
 int main(int argc, char* argv[]) {
   AppOptions(argc, argv);
@@ -26,9 +25,10 @@ int main(int argc, char* argv[]) {
   LOG(INFO) << "CONFIG FILE: " << AppOptions.config_file();
   AppConfig.init(AppOptions.config_file());
 
-  std::shared_ptr<Market::PublicApi> ws_api = std::make_shared<Market::Okx::WebSocketApi>(AppConfig.okx()->api_key(), AppConfig.okx()->secret_key(),
-                                                            AppConfig.okx()->passphrase());
-  std::shared_ptr<Market::PublicApi> binance_api = std::make_shared<Market::Binance::BinanceVisionAPI>();
+  std::shared_ptr<Market::PublicTradeApi> ws_api = std::make_shared<Market::Okx::WsPublicApi>();
+  std::shared_ptr<Market::PublicTradeApi> binance_api = std::make_shared<Market::Binance::BinanceVisionAPI>();
+  std::shared_ptr<Market::PublicDepthApi> okx_depth_api = std::make_shared<Market::Okx::WsPublicApi>();
+
   auto notice_api = std::make_shared<Notice::WeWork::WeWorkAPI>(AppConfig.wework()->key());
   boost::asio::io_context io_context;
 
@@ -40,22 +40,26 @@ int main(int argc, char* argv[]) {
     inst_id = fmt::format("{}-USDT", boost::to_upper_copy(inst_id));
   }
 
+  for (auto& inst_id : inst_ids) {
+    binance_api->subscribe_trades("trades", inst_id);
+    ws_api->subscribe_trades("trades", inst_id);
+    okx_depth_api->subscribe_depth("books5", inst_id);
+  }
+
   boost::asio::co_spawn(
       io_context,
       [&]() -> boost::asio::awaitable<void> {
         try {
-          for (auto& inst_id : inst_ids) {
-            co_await binance_api->subscribe_trades("trades", inst_id);
-            co_await ws_api->subscribe_trades("trades", inst_id);
-          }
-          boost::asio::co_spawn(io_context, binance_api->exec(), boost::asio::detached);
-          boost::asio::co_spawn(io_context, ws_api->exec(), boost::asio::detached);
-          boost::asio::co_spawn(io_context, s.run(), boost::asio::detached);
+          // boost::asio::co_spawn(io_context, binance_api->exec(), boost::asio::detached);
+          // boost::asio::co_spawn(io_context, ws_api->exec(), boost::asio::detached);
+          // boost::asio::co_spawn(io_context, s.run(), boost::asio::detached);
+          boost::asio::co_spawn(io_context, okx_depth_api->exec(), boost::asio::detached);
         } catch (const boost::system::system_error& e) {
           LOG(ERROR) << "System Error: " << e.what();
         } catch (const std::exception& e) {
           LOG(ERROR) << "Error: " << e.what();
         }
+        co_return;
       },
       boost::asio::detached);
 

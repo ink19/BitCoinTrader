@@ -7,7 +7,7 @@
 #include <memory>
 #include <map>
 
-#include "market/public_api.h"
+#include "market/public_trade_api.h"
 #include "wework/wework.h"
 
 namespace Service {
@@ -44,15 +44,15 @@ class ReportVal {
 
 class CompareSerivce {
  public:
-  CompareSerivce(std::shared_ptr<Market::PublicApi> binance_api, std::shared_ptr<Market::PublicApi> okx_api,
+  CompareSerivce(std::shared_ptr<Market::PublicTradeApi> binance_api, std::shared_ptr<Market::PublicTradeApi> okx_api,
                  std::shared_ptr<Notice::WeWork::WeWorkAPI> wework_api);
 
   asio::awaitable<int> run();
   asio::awaitable<int> compare();
 
  private:
-  std::shared_ptr<Market::PublicApi> binance_api;
-  std::shared_ptr<Market::PublicApi> okx_api;
+  std::shared_ptr<Market::PublicTradeApi> binance_api;
+  std::shared_ptr<Market::PublicTradeApi> okx_api;
   std::shared_ptr<Notice::WeWork::WeWorkAPI> wework_api;
 
   asio::awaitable<int> okx_callback(std::shared_ptr<Market::TradeData> data);

@@ -24,34 +24,37 @@ public:
     if constexpr (is_shared_v<T>) {
       using BaseFieldType = remove_shared_t<T>;
       os << DataPrinter<BaseFieldType>(*data, depth + 1);
-    } else {
+    } else if constexpr (is_vector_v<T>) {
+      os  << "[";
+      for (size_t i = 0; i < data.size(); ++i) {
+        os << DataPrinter<typename T::value_type>(data[i], depth + 1);
+        if (i != data.size() - 1) {
+          os << ", ";
+        }
+      }
+      os << "]; ";
+    } else if constexpr (std::is_same_v<T, dec_float>) {
+      os  << data << "; ";
+    } else if constexpr (std::is_base_of_v<T, std::string>) {
+      os  << data << "; ";
+    } else if constexpr (std::is_integral_v<T>) {
+      os  << data << "; ";
+    } else if constexpr (std::is_object_v<T>) {
+      os  << "{";
       boost::pfr::for_each_field(data, [&](auto&& field, auto index) {
         using FieldType = std::decay_t<decltype(field)>;
-        if constexpr (is_vector_v<FieldType>) {
-          os << boost::pfr::get_name<index, T>() << ": [";
-          for (size_t i = 0; i < field.size(); ++i) {
-            os << DataPrinter<typename FieldType::value_type>(field[i], depth + 1);
-            if (i != field.size() - 1) {
-              os << ", ";
-            }
-          }
-          os << "]; ";
-        } else if constexpr (std::is_same_v<FieldType, dec_float>) {
-          os << boost::pfr::get_name<index, T>() << ": " << field << "; ";
-        } else if constexpr (std::is_base_of_v<FieldType, std::string>) {
-          os << boost::pfr::get_name<index, T>() << ": " << field << "; ";
-        } else if constexpr (std::is_integral_v<FieldType>) {
-          os << boost::pfr::get_name<index, T>() << ": " << field << "; ";
-        } else if constexpr (std::is_object_v<FieldType>) {
-          os << boost::pfr::get_name<index, T>() << ": {";
-          os << DataPrinter<FieldType>(field, depth + 1);
-          os << "}; ";
-        } else {
-          os << boost::pfr::get_name<index, T>() << ": " << field << "; ";
-        }
+        os << boost::pfr::get_name<index, T>() << ": " <<  DataPrinter<FieldType>(field, depth + 1) << "; ";
       });
-    }
+      os << "}; ";
+    } else {
+      os << data << "; ";
+    } 
     return os;
+  }
+
+  template<typename U>
+  static U& print(U& os, const T& data) {
+
   }
 
   template <typename U>
@@ -67,7 +70,7 @@ private:
 template <typename T>
 class DataReader {
  public:
-  static T read(const boost::json::object& obj) {
+  static T read(const boost::json::value& obj) {
     T data;
     if constexpr (is_shared_v<T>) {
       using BaseFieldType = remove_shared_t<T>;
@@ -83,98 +86,92 @@ class DataReader {
     boost::pfr::for_each_field(data, [&](auto&& field, auto index) {
       using FieldType = std::decay_t<decltype(field)>;
       if (obj.contains(boost::pfr::get_name<index, T>())) {
-        if constexpr (std::is_same_v<FieldType, std::string>) {
-          field = obj.at(boost::pfr::get_name<index, T>()).as_string().c_str();
-        } else if constexpr (std::is_integral_v<FieldType>) {
-          if (obj.at(boost::pfr::get_name<index, T>()).is_string()) {
-            auto ps = std::string(obj.at(boost::pfr::get_name<index, T>()).as_string());
-            if (ps.empty()) {
-              field = 0;
-            } else {
-              field = std::stoll(ps);
-            }
-          } else if (obj.at(boost::pfr::get_name<index, T>()).is_int64()) {
-            field = obj.at(boost::pfr::get_name<index, T>()).as_int64();
-          } else if (obj.at(boost::pfr::get_name<index, T>()).is_uint64()) {
-            field = obj.at(boost::pfr::get_name<index, T>()).as_uint64();
-          } else if (obj.at(boost::pfr::get_name<index, T>()).is_double()) {
-            field = obj.at(boost::pfr::get_name<index, T>()).as_double();
-          }
-        } else if constexpr (std::is_floating_point_v<FieldType>) {
-          if (obj.at(boost::pfr::get_name<index, T>()).is_int64()) {
-            field = static_cast<FieldType>(obj.at(boost::pfr::get_name<index, T>()).as_int64());
-          } else if (obj.at(boost::pfr::get_name<index, T>()).is_double()) {
-            field = static_cast<FieldType>(obj.at(boost::pfr::get_name<index, T>()).as_double());
-          } else if (obj.at(boost::pfr::get_name<index, T>()).is_string()) {
-            auto value = obj.at(boost::pfr::get_name<index, T>()).as_string();
-            if (value.empty()) {
-              field = static_cast<FieldType>(0);
-            } else {
-              field = std::stof(std::string(value));
-            }
-          }
-        } else if constexpr (std::is_same_v<FieldType, bool>) {
-          if (obj.at(boost::pfr::get_name<index, T>()).is_string()) {
-            std::string fv = obj.at(boost::pfr::get_name<index, T>()).as_string().c_str();
-            if (!fv.empty()) {
-              field = fv == "true" ? true : false;
-            } else {
-              field = false;
-            }
-          } else if (obj.at(boost::pfr::get_name<index, T>()).is_bool()) {
-            field = obj.at(boost::pfr::get_name<index, T>()).as_bool();
-          } else if (obj.at(boost::pfr::get_name<index, T>()).is_int64()) {
-            field = obj.at(boost::pfr::get_name<index, T>()).as_int64() != 0;
-          }
-        } else if constexpr (std::is_same_v<FieldType, dec_float>) {
-          if (obj.at(boost::pfr::get_name<index, T>()).is_string()) {
-            std::string fv = obj.at(boost::pfr::get_name<index, T>()).as_string().c_str();
-            if (!fv.empty()) {
-              field = dec_float(fv);
-            } else {
-              field = dec_float(0);
-            }
-          }
-        } else if constexpr (is_vector_v<FieldType>) {
-          auto field_json = obj.at(boost::pfr::get_name<index, T>());
-          if (field_json.is_array()) {
-            field = DataReader<FieldType>::read(field_json.as_array());
-          } else {
-            LOG(ERROR) << "Expected array for field: " << boost::pfr::get_name<index, T>();
-          }
-        } else if constexpr (std::is_object_v<FieldType>) {
-          if (obj.at(boost::pfr::get_name<index, T>()).is_object()) {
-            field = DataReader<FieldType>::read(obj.at(boost::pfr::get_name<index, T>()).as_object());
-          } else {
-            LOG(ERROR) << "Expected object for field: " << boost::pfr::get_name<index, T>();
-          }
-        } else {
-          LOG(ERROR) << "Unsupported type: " << typeid(FieldType).name();
-        }
+        DataReader<FieldType>::read(obj.at(boost::pfr::get_name<index, T>()), field);
       }
     });
     return data;
   }
 
-  static T read(const boost::json::array& arr) {
-    T data;
+  static void read(const boost::json::array& arr, T &data) {
     if constexpr (is_vector_v<T>) {
       for (size_t i = 0; i < arr.size(); ++i) {
-        auto p_value = DataReader<typename T::value_type>::read(arr.at(i).as_object());
+        auto p_value = DataReader<typename T::value_type>::read(arr.at(i));
         data.push_back(p_value);
       }
     }
-    return data;
   }
 
-  static T read(const boost::json::value& obj) {
-    if (obj.is_object()) {
-      return read(obj.as_object());
-    } else if (obj.is_array()) {
-      return read(obj.as_array());
+  static void read(const boost::json::value& jvalue, T &data) {
+    if constexpr (is_shared_v<T>) {
+      using BaseFieldType = remove_shared_t<T>;
+      data = std::make_shared<BaseFieldType>();
+      DataReader<BaseFieldType>::read(jvalue, *data);
+    } else if constexpr (std::is_same_v<T, std::string>) {
+      data = jvalue.as_string().c_str();
+    } else if constexpr (std::is_integral_v<T>) {
+      if (jvalue.is_string()) {
+        auto ps = std::string(jvalue.as_string());
+        if (ps.empty()) {
+          data = 0;
+        } else {
+          data = std::stoll(ps);
+        }
+      } else if (jvalue.is_int64()) {
+        data = jvalue.as_int64();
+      } else if (jvalue.is_uint64()) {
+        data = jvalue.as_uint64();
+      } else if (jvalue.is_double()) {
+        data = jvalue.as_double();
+      }
+    } else if constexpr (std::is_floating_point_v<T>) {
+      if (jvalue.is_int64()) {
+        data = static_cast<T>(jvalue.as_int64());
+      } else if (jvalue.is_double()) {
+        data = static_cast<T>(jvalue.as_double());
+      } else if (jvalue.is_string()) {
+        auto value = jvalue.as_string();
+        if (value.empty()) {
+          data = static_cast<T>(0);
+        } else {
+          data = std::stof(std::string(value));
+        }
+      }
+    } else if constexpr (std::is_same_v<T, bool>) {
+      if (jvalue.is_string()) {
+        std::string fv = jvalue.as_string().c_str();
+        if (!fv.empty()) {
+          data = fv == "true" ? true : false;
+        } else {
+          data = false;
+        }
+      } else if (jvalue.is_bool()) {
+        data = jvalue.as_bool();
+      } else if (jvalue.is_int64()) {
+        data = jvalue.as_int64() != 0;
+      }
+    } else if constexpr (std::is_same_v<T, dec_float>) {
+      if (jvalue.is_string()) {
+        std::string fv = jvalue.as_string().c_str();
+        if (!fv.empty()) {
+          data = dec_float(fv);
+        } else {
+          data = dec_float(0);
+        }
+      }
+    } else if constexpr (is_vector_v<T>) {
+      if (jvalue.is_array()) {
+        DataReader<T>::read(jvalue.as_array(), data);
+      } else {
+        LOG(ERROR) << "Expected array for field";
+      }
+    } else if constexpr (std::is_object_v<T>) {
+      if (jvalue.is_object()) {
+        DataReader<T>::read(jvalue.as_object(), data);
+      } else {
+        LOG(ERROR) << "Expected object for field";
+      }
     } else {
-      LOG(ERROR) << "Expected object";
-      return T();
+      LOG(ERROR) << "Unsupported type: " << typeid(T).name();
     }
   }
 

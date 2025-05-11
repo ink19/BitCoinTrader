@@ -10,8 +10,8 @@ namespace Compare {
 
 namespace bm = boost::multiprecision;
 
-CompareSerivce::CompareSerivce(std::shared_ptr<Market::PublicApi> binance_api,
-                               std::shared_ptr<Market::PublicApi> okx_api,
+CompareSerivce::CompareSerivce(std::shared_ptr<Market::PublicTradeApi> binance_api,
+                               std::shared_ptr<Market::PublicTradeApi> okx_api,
                                std::shared_ptr<Notice::WeWork::WeWorkAPI> wework_api)
     : binance_api(binance_api), okx_api(okx_api), wework_api(wework_api) {
   binance_api->set_trades_callback(std::bind(&CompareSerivce::binance_callback, this, std::placeholders::_1));
@@ -51,7 +51,7 @@ asio::awaitable<int> CompareSerivce::run() {
   while (true) {
     timer.expires_after(std::chrono::milliseconds(100));
     co_await timer.async_wait(asio::use_awaitable);
-    co_await compare();
+    boost::asio::co_spawn(ctx, this->compare(), asio::detached);
   }
 
   co_return 0;
