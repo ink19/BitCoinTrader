@@ -4,27 +4,29 @@
 #include <string>
 #include <boost/asio/awaitable.hpp>
 
-namespace Notice {
-namespace WeWork {
+#include "base/notice.h"
+
+namespace notice {
+namespace wework {
 
 namespace asio = boost::asio;
 
-class WeWorkText {
+class WeworkText {
 public:
   std::string content;
 };
 
-class WeWorkData {
+class WeworkData {
 public:
   std::string msgtype = "text";
-  WeWorkText text;
+  WeworkText text;
 };
 
-class WeWorkAPI {
+class WeworkNotice : public notice::base::Notice {
  public:
-  WeWorkAPI(std::string key);
-  asio::awaitable<int> send(std::string msg);
-
+  WeworkNotice(engine::EnginePtr engine, std::string key);
+  asio::awaitable<void> send_message(engine::MessageDataPtr msg) override;
+  asio::awaitable<void> run() override;
  private:
   std::string m_base_uri = "https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=";
   std::string m_key = "";

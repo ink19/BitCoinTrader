@@ -1,27 +1,35 @@
 #include "wework.h"
 
-#include "request.h"
-#include "component.hpp"
+#include <cpphttp/request.h>
+#include "utils/component.hpp"
 #include <boost/json.hpp>
+#include "utils/utils.h"
 
-namespace Notice {
-namespace WeWork {
+namespace notice::wework {
 
-WeWorkAPI::WeWorkAPI(std::string key) : m_key(key), m_uri(m_base_uri + key) {}
+WeworkNotice::WeworkNotice(engine::EnginePtr engine, std::string key) : 
+  notice::base::Notice(engine), m_key(key), m_uri(m_base_uri + key) {}
 
-asio::awaitable<int> WeWorkAPI::send(std::string msg) {
-  auto send_obj = WeWorkData();
-  send_obj.text.content = msg;
+asio::awaitable<void> WeworkNotice::send_message(engine::MessageDataPtr msg) {
+  auto send_obj = WeworkData();
+  send_obj.text.content = msg->message;
 
-  auto req = Common::HttpRequest(
-    m_uri, "POST", boost::json::serialize(Common::JsonSerialize(send_obj))
+  auto snd_msg = boost::json::serialize(Common::JsonSerialize(send_obj));
+
+  ELOG_DEBUG("send message: {}", snd_msg);
+
+  auto req = cpphttp::HttpRequest(
+    m_uri, "POST", snd_msg
   );
 
   auto resp = co_await req.request();
 
-  co_return 0;
+  co_return;
+}
+
+asio::awaitable<void> WeworkNotice::run() {
+  co_return;
 }
 
 
-}  // namespace WeWork
-}  // namespace Notice
+}  // namespace notice::wework

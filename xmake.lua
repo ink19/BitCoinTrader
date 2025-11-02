@@ -1,19 +1,25 @@
-add_requires("fmt", "openssl", "glog", "cryptopp", "liburing")
-add_requires("boost[asio,beast,url,json,system,program_options,multiprecision,pfr,math,chrono,filesystem,serialization,thread]")
+add_repositories("local-repo repo", {rootdir = os.scriptdir()})
+
+add_requires("fmt", "openssl", "cryptopp", "glog", "liburing", "jsoncpp", "cpphttp")
+add_requires("boost[hash2,asio,beast,url,json,system,program_options,multiprecision,pfr,math,chrono,filesystem,serialization,thread]")
 add_rules("plugin.compile_commands.autoupdate", {outputdir = "build/"})
 set_languages("c++23")
 
+add_rules("mode.debug")
+
 target("BitCoinTrader")
     set_kind("binary")
-    add_includedirs("market/", "common/http", "common/utils", "config", "record")
-    add_includedirs("service", "notice")
+    add_includedirs("market/", "common/", "engine/", "stragy/", "notice/", "log/")
+
     add_files("market/**/*.cpp")
     add_files("common/**/*.cpp")
-    add_files("service/**/*.cpp")
     add_files("notice/**/*.cpp")
     add_files("*.cpp")
-    add_files("record/*.cpp")
-    add_packages("fmt", "openssl", "glog", "cryptopp", "liburing")
+    add_files("engine/*.cpp")
+    add_files("stragy/**/*.cpp")
+    add_files("log/**/*.cpp")
+    
+    add_packages("cpphttp", "fmt", "openssl", "glog","cryptopp", "liburing", "jsoncpp")
     add_packages("boost")
     add_defines("BOOST_ASIO_HAS_IO_URING", "BOOST_ASIO_HAS_FILE")
     set_toolset("cxx", "clang")

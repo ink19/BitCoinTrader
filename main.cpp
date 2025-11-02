@@ -8,12 +8,12 @@
 #include <boost/system.hpp>
 #include <boost/system/system_error.hpp>
 
-#include "binance/ws_vision.h"
-#include "compare/compare.h"
-#include "config.h"
-#include "options.h"
+#include "config/config.h"
+#include "config/options.h"
 #include "wework/wework.h"
-#include "okx/ws_public_api.h"
+#include "jsoncpp/jsoncpp.hpp"
+#include "base/log.h"
+#include "testing/testing.h"
 
 int main(int argc, char* argv[]) {
   AppOptions(argc, argv);
@@ -25,50 +25,20 @@ int main(int argc, char* argv[]) {
   LOG(INFO) << "CONFIG FILE: " << AppOptions.config_file();
   AppConfig.init(AppOptions.config_file());
 
-  std::shared_ptr<Market::PublicTradeApi> ws_api = std::make_shared<Market::Okx::WsPublicApi>();
-  std::shared_ptr<Market::PublicTradeApi> binance_api = std::make_shared<Market::Binance::BinanceVisionAPI>();
-  std::shared_ptr<Market::PublicDepthApi> okx_depth_api = std::make_shared<Market::Okx::WsPublicApi>();
-  std::shared_ptr<Market::PublicDepthApi> binance_depth_api = std::make_shared<Market::Binance::BinanceVisionAPI>();
-
-  auto notice_api = std::make_shared<Notice::WeWork::WeWorkAPI>(AppConfig.wework()->key());
   boost::asio::io_context io_context;
+  auto engine = std::make_shared<engine::Engine>(io_context);
 
-  Service::Compare::CompareSerivce s(binance_api, ws_api, notice_api);
+  auto wework = std::make_shared<notice::wework::WeworkNotice>(engine, AppConfig.wework()->key());
+  auto elog = std::make_shared<elog::base::Baselog>(engine);
+  auto testing = std::make_shared<stragy::testing::Testing>(engine);
 
-  std::vector<std::string> inst_ids = {};
-  boost::algorithm::split(inst_ids, AppOptions.coin(), boost::is_any_of(","));
-  for (auto& inst_id : inst_ids) {
-    inst_id = fmt::format("{}-USDT", boost::to_upper_copy(inst_id));
-  }
+  engine->register_component(wework);
+  engine->register_component(elog);
+  engine->register_component(testing);
 
-  for (auto& inst_id : inst_ids) {
-    binance_api->subscribe_trades("trades", inst_id);
-    ws_api->subscribe_trades("trades", inst_id);
-    okx_depth_api->subscribe_depth("books5", inst_id);
-    binance_depth_api->subscribe_depth("books5", inst_id);
-  }
-
-  boost::asio::co_spawn(
-      io_context,
-      [&]() -> boost::asio::awaitable<void> {
-        try {
-          // boost::asio::co_spawn(io_context, binance_api->exec(), boost::asio::detached);
-          // boost::asio::co_spawn(io_context, ws_api->exec(), boost::asio::detached);
-          // boost::asio::co_spawn(io_context, s.run(), boost::asio::detached);
-          boost::asio::co_spawn(io_context, okx_depth_api->exec(), boost::asio::detached);
-          boost::asio::co_spawn(io_context, binance_depth_api->exec(), boost::asio::detached);
-        } catch (const boost::system::system_error& e) {
-          LOG(ERROR) << "System Error: " << e.what();
-        } catch (const std::exception& e) {
-          LOG(ERROR) << "Error: " << e.what();
-        }
-        co_return;
-      },
-      boost::asio::detached);
+  asio::co_spawn(io_context, engine->run(), asio::detached);
 
   io_context.run();
-
-  LOG(INFO) << "END";
 
   google::ShutdownGoogleLogging();
   return 0;
