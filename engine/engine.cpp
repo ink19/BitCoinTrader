@@ -25,7 +25,6 @@ asio::awaitable<void> Engine::run() {
 
   LOG(INFO) << "Engine start";
 
-
   auto executor = co_await asio::this_coro::executor;
   while (true) {
     try {
@@ -33,7 +32,16 @@ asio::awaitable<void> Engine::run() {
       auto& callbacks = callbacks_[event->type];
       for (auto& callback : callbacks) {
         asio::co_spawn(executor, [&]() -> asio::awaitable<void> {
-          co_await callback(event);
+          try {
+            co_await callback(event);
+          } catch (boost::system::system_error &e) {
+            LOG(ERROR) << fmt::format("Type {} callback error: {}", int(event->type), e.what());
+          } catch (std::runtime_error &e) {
+            LOG(ERROR) << fmt::format("Type {} callback error: {}", int(event->type), e.what());
+          } catch (...) {
+            LOG(ERROR) << fmt::format("Type {} callback error: unknown error", int(event->type)); 
+          }
+          co_return;
         }, asio::detached);
       }
 

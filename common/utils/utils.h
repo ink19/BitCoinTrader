@@ -6,9 +6,29 @@
 #include <boost/multiprecision/cpp_dec_float.hpp>
 #include <boost/asio.hpp>
 #include <fmt/format.h>
+#include <jsoncpp/jsoncpp.hpp>
 
-using dec_float = boost::multiprecision::cpp_dec_float<50>;
 namespace asio = boost::asio;
+
+
+using dec_float = boost::multiprecision::cpp_dec_float_50;
+namespace jsoncpp {
+
+template<>
+struct transform<dec_float> {
+    static void trans(const bj::value &jv, dec_float &t) {
+        if (jv.is_string()) {
+            t = dec_float(jv.as_string().c_str());
+        } else if (jv.is_double()) {
+            t = dec_float(jv.as_double());
+        } else if (jv.is_int64()) {
+            t = dec_float(jv.as_int64());
+        } else {
+            throw std::runtime_error("invalid type");
+        }
+    }
+};
+}
 
 
 namespace Common {

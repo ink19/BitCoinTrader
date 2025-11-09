@@ -9,27 +9,39 @@
 namespace engine {
 
 class BaseData : public std::enable_shared_from_this<BaseData> {
-public:
-    virtual ~BaseData() = default;
-    
-    std::string symbol;
-    std::string exchange;
-    int64_t timestamp_ms;
+ public:
+  virtual ~BaseData() = default;
+
+  std::string symbol;
+  std::string exchange;
+  int64_t timestamp_ms;
 };
 
 enum class EventType {
+  kQuit,  // 退出
+
+  kSubscribeTick,  // 添加订阅
   kTick,
   kOrderBook,
+
+  kSendTrade,
+  kQueryOrder,
   kTrade,
+
+  kQueryPosition,
   kPosition,
+
+  kQueryAccount,
   kAccount,
+
   kLog,
   kMessage,
+
   kAll,
 };
 
-class Event : public std::enable_shared_from_this<Event>{
-public:
+class Event : public std::enable_shared_from_this<Event> {
+ public:
   Event(EventType type, std::shared_ptr<BaseData> data) {
     this->type = type;
     this->data = data;
@@ -39,7 +51,6 @@ public:
 };
 
 typedef std::shared_ptr<Event> EventPtr;
-
 
 class TickData;
 typedef std::shared_ptr<TickData> TickDataPtr;
@@ -58,6 +69,7 @@ class OrderBook : public BaseData {
  public:
   std::vector<OrderBookItemPtr> bids;
   std::vector<OrderBookItemPtr> asks;
+  const static EventType type = EventType::kOrderBook;
 };
 
 typedef std::shared_ptr<OrderBook> OrderBookPtr;
@@ -86,6 +98,8 @@ class TickData : public BaseData {
   dec_float price;            // 成交价
   dec_float volume;           // 成交量
   MarketDataPtr market_data;  // 市场数据
+
+  const static EventType type = EventType::kTick;
 };
 
 // Bar数据
@@ -112,7 +126,7 @@ enum class OrderStatus {
   REJECTED,        // 已拒绝
 };
 
-class OrderData : public BaseData {
+class OrderDataItem : public BaseData {
  public:
   std::string order_id;
 
@@ -120,44 +134,100 @@ class OrderData : public BaseData {
   dec_float price;
   dec_float volume;
   dec_float filled_volume;  // 已成交数量
-  OrderStatus status; // 订单状态
+  OrderStatus status;       // 订单状态
+};
+
+typedef std::shared_ptr<OrderDataItem> OrderDataItemPtr;
+
+class OrderData : public BaseData {
+ public:
+  std::vector<OrderDataItemPtr> items;
 };
 
 typedef std::shared_ptr<OrderData> OrderDataPtr;
 
 class TradeData : public BaseData {
  public:
-  std::string trade_id; // 成交ID
+  std::string trade_id;  // 成交ID
 
   Direction direction;
   dec_float price;
   dec_float volume;
   OrderDataPtr order;  // 订单
+
+  const static EventType type = EventType::kTrade;
 };
 
 typedef std::shared_ptr<TradeData> TradeDataPtr;
 
 // 持仓数据
-class PositionData : public BaseData {
+class PositionItem {
  public:
+  std::string symbol;
   dec_float volume;  // 持仓数量
   Direction direction;
   dec_float frozen_volume;  // 冻结数量
-  dec_float price;  // 持仓价格
-  dec_float pnl;  // 持仓盈亏
+  dec_float price;          // 持仓价格
+  dec_float pnl;            // 持仓盈亏
+
+  const static EventType type = EventType::kPosition;
+};
+
+typedef std::shared_ptr<PositionItem> PositionItemPtr;
+
+class PositionData : public BaseData {
+ public:
+  std::vector<PositionItemPtr> items;
+
+  const static EventType type = EventType::kPosition;
 };
 
 typedef std::shared_ptr<PositionData> PositionDataPtr;
+
+class BalanceItem {
+ public:
+  std::string symbol;
+  dec_float balance;         // 账户余额
+  dec_float frozen_balance;  // 冻结余额
+
+};
+
+typedef std::shared_ptr<BalanceItem> BalanceItemPtr;
 
 class AccountData : public BaseData {
  public:
   std::string account_id;
 
-  dec_float balance;  // 账户余额
+  dec_float balance;         // 账户余额
   dec_float frozen_balance;  // 冻结余额
+
+  std::vector<BalanceItemPtr> items;
+
+  const static EventType type = EventType::kAccount;
 };
 
 typedef std::shared_ptr<AccountData> AccountDataPtr;
+
+class QueryAccountData : public BaseData {
+ public:
+  const static EventType type = EventType::kQueryAccount;
+};
+
+typedef std::shared_ptr<QueryAccountData> QueryAccountDataPtr;
+
+class QueryPositionData : public BaseData {
+ public:
+  const static EventType type = EventType::kQueryPosition;
+};
+
+typedef std::shared_ptr<QueryPositionData> QueryPositionDataPtr;
+
+class QueryOrderData : public BaseData {
+ public:
+  const static EventType type = EventType::kQueryOrder;
+};
+
+typedef std::shared_ptr<QueryOrderData> QueryOrderDataPtr;
 
 enum class LogLevel {
   kError,
@@ -167,24 +237,26 @@ enum class LogLevel {
 };
 
 class LogData : public BaseData {
-public:
+ public:
   LogData(LogLevel level, const std::string& log) : level(level), log(log) {}
   std::string log;
   LogLevel level;
-  
+
+  const static EventType type = EventType::kLog;
 };
 
 typedef std::shared_ptr<LogData> LogDataPtr;
 
 class MessageData : public BaseData {
-public:
+ public:
   MessageData(const std::string& message) : message(message) {}
   std::string message;
+
+  const static EventType type = EventType::kMessage;
 };
 
 typedef std::shared_ptr<MessageData> MessageDataPtr;
 
-
-}  // namespace market
+}  // namespace engine
 
 #endif  // BITCOINTRADER_MARKET_BASE_OBJECT_H_

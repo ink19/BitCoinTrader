@@ -12,7 +12,10 @@ public:
   Testing(engine::EnginePtr engine);
   ~Testing();
 
-  asio::awaitable<void> run();
+  asio::awaitable<void> run() override;
+
+  virtual asio::awaitable<void> recv_account(engine::AccountDataPtr account) override;
+  virtual asio::awaitable<void> recv_position(engine::PositionDataPtr position) override;
 };
 
 }  // namespace testing

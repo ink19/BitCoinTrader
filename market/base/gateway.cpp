@@ -2,10 +2,18 @@
 
 namespace market::base {
 
-Gateway::Gateway(EnginePtr engine) : _engine(engine) {}
+Gateway::Gateway(EnginePtr engine, const std::string& name) : _engine(engine), _name(name) {}
 
 Gateway::~Gateway() {}
 
+void Gateway::init() {
+  _engine->register_callback<engine::QueryAccountData>(engine::EventType::kQueryAccount,
+    std::bind(&Gateway::query_account, shared_from_this(), std::placeholders::_1));
+  _engine->register_callback<engine::QueryPositionData>(engine::EventType::kQueryPosition,
+    std::bind(&Gateway::query_position, shared_from_this(), std::placeholders::_1));
+  _engine->register_callback<engine::QueryOrderData>(engine::EventType::kQueryOrder,
+    std::bind(&Gateway::query_order, shared_from_this(), std::placeholders::_1));
+}
 
 asio::awaitable<void> Gateway::on_tick(OrderDataPtr order) {
   return _engine->on_event(EventType::kTick, order);

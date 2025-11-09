@@ -1,0 +1,46 @@
+#ifndef MARKET_OKX_OKX_HTTP_H_
+#define MARKET_OKX_OKX_HTTP_H_
+
+#include <memory>
+#include <string>
+#include "utils/utils.h"
+#include <map>
+#include "data.hpp"
+
+namespace market::okx {
+
+class OkxHttpRequest {
+ public:
+  OkxHttpRequest(const std::string& api_key, const std::string& secret_key, const std::string& passphrase);
+
+  asio::awaitable<std::string> request(const std::string& method, const std::string& request_path,
+                      const std::string& body);
+  void set_sim(bool sim);
+ private:
+  std::map<std::string, std::string> get_headers(const std::string& method, const std::string& request_path,
+                      const std::string& body);
+  std::string api_key;
+  std::string secret_key;
+  std::string passphrase;
+  const std::string baseUrl_ = "https://www.okx.com";
+  bool sim = false;
+};
+
+typedef std::shared_ptr<OkxHttpRequest> OkxHttpRequestPtr;
+
+class OkxHttp {
+ public:
+  OkxHttp(const std::string& api_key, const std::string& secret_key, const std::string& passphrase);
+  ~OkxHttp() {}
+
+  asio::awaitable<Account> get_account();
+  asio::awaitable<std::vector<PositionDetail>> get_positions();
+  asio::awaitable<std::vector<OrderDetail>> get_orders();
+ private:
+  OkxHttpRequestPtr request_;
+  
+};
+
+}  // namespace market::okx
+
+#endif  // MARKET_OKX_OKX_HTTP_H_

@@ -11,10 +11,13 @@ namespace market::base {
 using namespace engine;
 
 // 通用交易网关
-class Gateway {
+class Gateway : public engine::Component, public std::enable_shared_from_this<Gateway> {
 public:
-  Gateway(EnginePtr engine);
+  Gateway(engine::EnginePtr engine, const std::string& name);
   virtual ~Gateway();
+
+  void init();
+
   // name 返回交易网关名称
   std::string name() const { return _name; }
 
@@ -48,16 +51,16 @@ public:
   virtual void cancel_order(OrderDataPtr order) = 0;
 
   // 查询账户
-  virtual void query_account() = 0;
+  virtual asio::awaitable<void> query_account(engine::QueryAccountDataPtr data) = 0;
 
   // 查询持仓
-  virtual void query_position() = 0;
+  virtual asio::awaitable<void> query_position(engine::QueryPositionDataPtr data) = 0;
 
   // 查询历史订单
-  virtual void query_history_order() = 0;
+  virtual asio::awaitable<void> query_order(engine::QueryOrderDataPtr data) = 0;
 
 private:
-  const static std::string _name;
+  const std::string _name;
   EnginePtr _engine;
 };
 

@@ -14,13 +14,23 @@ Testing::~Testing() {}
 
 asio::awaitable<void> Testing::run() {
   auto executor = co_await asio::this_coro::executor;
-  ELOG_DEBUG("Testing start");
-  for (int loop_i = 0; loop_i < 3; ++loop_i) {
-    asio::steady_timer timer(executor, 1s);
-    co_await timer.async_wait(asio::use_awaitable);
-    ELOG_DEBUG("Testing loop {}", loop_i);
-    co_await on_message(std::make_shared<engine::MessageData>("test"));
+  ELOG_DEBUG("run");
+  co_await on_request_account();
+  co_await on_request_position();
+  co_return;
+}
+
+asio::awaitable<void> Testing::recv_account(engine::AccountDataPtr account) {
+  ELOG_DEBUG("recv_account: {}", account->balance.str());
+  co_return;
+}
+
+asio::awaitable<void> Testing::recv_position(engine::PositionDataPtr position) {
+  ELOG_DEBUG("recv_position: {}", position->items.size());
+  for (auto& item : position->items) {
+    ELOG_DEBUG("position: {}, {} {} {}", item->symbol, item->volume.str(), item->price.str(), int(item->direction));
   }
   co_return;
 }
+
 }

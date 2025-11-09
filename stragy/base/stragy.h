@@ -16,6 +16,11 @@ public:
 
   asio::awaitable<void> on_log(engine::LogDataPtr log);
   asio::awaitable<void> on_message(engine::MessageDataPtr msg);
+  asio::awaitable<void> on_request_account();
+  asio::awaitable<void> on_request_position();
+
+  virtual asio::awaitable<void> recv_account(engine::AccountDataPtr account) = 0;
+  virtual asio::awaitable<void> recv_position(engine::PositionDataPtr position) = 0;
 
 private:
   engine::EnginePtr _engine;
