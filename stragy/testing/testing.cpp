@@ -14,21 +14,21 @@ Testing::~Testing() {}
 
 asio::awaitable<void> Testing::run() {
   auto executor = co_await asio::this_coro::executor;
-  ELOG_DEBUG("run");
+  LOG(INFO) << fmt::format("run");
   co_await on_request_account();
   co_await on_request_position();
   co_return;
 }
 
 asio::awaitable<void> Testing::recv_account(engine::AccountDataPtr account) {
-  ELOG_DEBUG("recv_account: {}", account->balance.str());
+  LOG(INFO) << fmt::format("recv_account: {}", account->balance.str());
   co_return;
 }
 
 asio::awaitable<void> Testing::recv_position(engine::PositionDataPtr position) {
-  ELOG_DEBUG("recv_position: {}", position->items.size());
+  LOG(INFO) << fmt::format("recv_position: {}", position->items.size());
   for (auto& item : position->items) {
-    ELOG_DEBUG("position: {}, {} {} {}", item->symbol, item->volume.str(), item->price.str(), int(item->direction));
+    LOG(INFO) << fmt::format("position: {}, {} {} {}", item->symbol, item->volume.str(), item->price.str(), int(item->direction));
   }
   co_return;
 }

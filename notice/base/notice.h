@@ -11,8 +11,6 @@ public:
   Notice(engine::EnginePtr engine);
   void init() override;
 
-  asio::awaitable<void> on_log(engine::LogDataPtr log);
-
   virtual asio::awaitable<void> send_message(engine::MessageDataPtr msg) = 0;
 private:
   engine::EnginePtr engine_;

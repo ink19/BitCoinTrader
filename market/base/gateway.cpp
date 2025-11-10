@@ -27,10 +27,6 @@ asio::awaitable<void> Gateway::on_account(AccountDataPtr account) {
   return _engine->on_event(EventType::kAccount, account);
 }
 
-asio::awaitable<void> Gateway::on_log(LogDataPtr log) {
-  return _engine->on_event(EventType::kLog, log);
-}
-
 asio::awaitable<void> Gateway::on_order(OrderDataPtr order) {
   return _engine->on_event(EventType::kOrderBook, order);
 }

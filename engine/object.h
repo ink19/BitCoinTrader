@@ -34,7 +34,6 @@ enum class EventType {
   kQueryAccount,
   kAccount,
 
-  kLog,
   kMessage,
 
   kAll,
@@ -228,24 +227,6 @@ class QueryOrderData : public BaseData {
 };
 
 typedef std::shared_ptr<QueryOrderData> QueryOrderDataPtr;
-
-enum class LogLevel {
-  kError,
-  kWarning,
-  kInfo,
-  kDebug,
-};
-
-class LogData : public BaseData {
- public:
-  LogData(LogLevel level, const std::string& log) : level(level), log(log) {}
-  std::string log;
-  LogLevel level;
-
-  const static EventType type = EventType::kLog;
-};
-
-typedef std::shared_ptr<LogData> LogDataPtr;
 
 class MessageData : public BaseData {
  public:

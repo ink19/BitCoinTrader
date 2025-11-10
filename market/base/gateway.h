@@ -36,9 +36,6 @@ public:
   // on_trade 成交更新
   asio::awaitable<void> on_trade(TradeDataPtr trade);
 
-  // on_log 日志更新
-  asio::awaitable<void> on_log(LogDataPtr log);
-
   virtual void connect() = 0;
   virtual void close() = 0;
 

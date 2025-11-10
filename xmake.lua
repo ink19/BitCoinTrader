@@ -9,7 +9,7 @@ add_rules("mode.debug")
 
 target("BitCoinTrader")
     set_kind("binary")
-    add_includedirs("market/", "common/", "engine/", "stragy/", "notice/", "log/")
+    add_includedirs("market/", "common/", "engine/", "stragy/", "notice/")
 
     add_files("market/**/*.cpp")
     add_files("common/**/*.cpp")
@@ -17,7 +17,6 @@ target("BitCoinTrader")
     add_files("*.cpp")
     add_files("engine/*.cpp")
     add_files("stragy/**/*.cpp")
-    add_files("log/**/*.cpp")
     
     add_packages("cpphttp", "fmt", "openssl", "glog","cryptopp", "liburing", "jsoncpp")
     add_packages("boost")

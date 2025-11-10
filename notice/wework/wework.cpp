@@ -16,14 +16,14 @@ asio::awaitable<void> WeworkNotice::send_message(engine::MessageDataPtr msg) {
 
   auto snd_msg = boost::json::serialize(jsoncpp::to_json(send_obj));
 
-  ELOG_DEBUG("send msg req: {}", snd_msg);
+  LOG(INFO) << fmt::format("send msg req: {}", snd_msg);
 
   auto req = cpphttp::HttpRequest(
     m_uri, "POST", snd_msg
   );
 
   auto resp = co_await req.request();
-  ELOG_DEBUG("send msg rsp: {}", resp);
+  LOG(INFO) << fmt::format("send msg rsp: {}", resp);
   
   co_return;
 }

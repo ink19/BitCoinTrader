@@ -11,7 +11,6 @@
 #include "config/config.h"
 #include "config/options.h"
 #include "wework/wework.h"
-#include "base/log.h"
 #include "testing/testing.h"
 #include "okx/okx.h"
 
@@ -29,13 +28,11 @@ int main(int argc, char* argv[]) {
   auto engine = std::make_shared<engine::Engine>(io_context);
 
   auto wework = std::make_shared<notice::wework::WeworkNotice>(engine, AppConfig.wework()->key());
-  auto elog = std::make_shared<elog::base::Baselog>(engine);
   auto testing = std::make_shared<stragy::testing::Testing>(engine);
   auto okx = std::make_shared<market::okx::Okx>(engine,
     AppConfig.okx()->api_key(), AppConfig.okx()->secret_key(), AppConfig.okx()->passphrase());
 
   engine->register_component(wework);
-  engine->register_component(elog);
   engine->register_component(testing);
   engine->register_component(okx);
 

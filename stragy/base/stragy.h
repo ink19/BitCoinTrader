@@ -14,7 +14,6 @@ public:
 
   void init() override;
 
-  asio::awaitable<void> on_log(engine::LogDataPtr log);
   asio::awaitable<void> on_message(engine::MessageDataPtr msg);
   asio::awaitable<void> on_request_account();
   asio::awaitable<void> on_request_position();

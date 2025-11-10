@@ -10,8 +10,4 @@ void Notice::init() {
     engine::EventType::kMessage, std::bind(&Notice::send_message, shared_from_this(), std::placeholders::_1));
 }
 
-asio::awaitable<void> Notice::on_log(engine::LogDataPtr log) {
-  return engine_->on_event(engine::EventType::kLog, log);
-}
-
 }  // namespace notice::base

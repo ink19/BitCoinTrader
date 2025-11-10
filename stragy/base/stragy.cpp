@@ -15,10 +15,6 @@ void Stragy::init() {
     std::bind(&Stragy::recv_position, shared_from_this(), std::placeholders::_1));
 }
 
-asio::awaitable<void> Stragy::on_log(engine::LogDataPtr log) {
-  return _engine->on_event(engine::EventType::kLog, log);
-}
-
 asio::awaitable<void> Stragy::on_message(engine::MessageDataPtr msg) {
   return _engine->on_event(engine::EventType::kMessage, msg);
 }
