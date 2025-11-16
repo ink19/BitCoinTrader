@@ -1,6 +1,15 @@
 #ifndef _BITCONITRADER_MARKET_OKX_OKX_H
 #define _BITCONITRADER_MARKET_OKX_OKX_H
 
+/**
+ * @file okx.h
+ * @brief OKX交易所网关实现
+ * 
+ * 实现了与OKX交易所的交互，包括：
+ * - 通过HTTP API查询账户、持仓、订单
+ * - 通过WebSocket接收实时行情数据
+ */
+
 #include <string>
 
 #include "base/gateway.h"
@@ -11,49 +20,102 @@
 
 namespace market::okx {
 
-
+/**
+ * @brief OKX交易所网关
+ * 
+ * 继承自通用网关基类，实现了OKX交易所的具体功能。
+ * 使用HTTP进行查询操作，使用WebSocket接收实时数据推送。
+ */
 class Okx : public base::Gateway {
  public:
   Okx(engine::EnginePtr engine);
   ~Okx() {}
 
+  /// 连接功能（当前未实现）
   void connect() override{};
+  
+  /// 关闭连接功能（当前未实现）
   void close() override{};
 
+  /**
+   * @brief 主运行循环，持续从 WebSocket 接收数据
+   * @return asio::awaitable<void> 异步协程
+   */
   asio::awaitable<void> run() override;
+  
+  /**
+   * @brief 初始化市场网关，连接WebSocket
+   * @return asio::awaitable<void> 异步协程
+   */
   virtual asio::awaitable<void> market_init() override;
 
-  // 订阅行情
+  /// 订阅行情（当前未实现）
   void subscribe(const std::string& symbol) override{};
+  
+  /// 取消订阅（当前未实现）
   void unsubscribe(const std::string& symbol) override{};
 
-  // 下单
+  /// 发送订单（当前未实现）
   void send_order(engine::OrderDataPtr order) override{};
+  
+  /// 取消订单（当前未实现）
   void cancel_order(engine::OrderDataPtr order) override{};
 
-  // 查询账户
+  /**
+   * @brief 查询账户信息，通过HTTP API获取
+   * @param data 查询请求数据
+   * @return asio::awaitable<void> 异步协程
+   */
   asio::awaitable<void> query_account(engine::QueryAccountDataPtr data) override;
 
-  // 查询持仓
+  /**
+   * @brief 查询持仓信息，通过HTTP API获取
+   * @param data 查询请求数据
+   * @return asio::awaitable<void> 异步协程
+   */
   asio::awaitable<void> query_position(engine::QueryPositionDataPtr data) override;
 
-  // 查询历史订单
+  /**
+   * @brief 查询历史订单，通过HTTP API获取
+   * @param data 查询请求数据
+   * @return asio::awaitable<void> 异步协程
+   */
   asio::awaitable<void> query_order(engine::QueryOrderDataPtr data) override;
 
-  // 订阅book
+  /**
+   * @brief 订阅订单簿数据，通过WebSocket订阅
+   * @param data 订阅请求数据
+   * @return asio::awaitable<void> 异步协程
+   */
   asio::awaitable<void> subscribe_book(engine::SubscribeDataPtr data) override;
 
-  // 订阅tick
+  /**
+   * @brief 订阅Tick数据，通过WebSocket订阅
+   * @param data 订阅请求数据
+   * @return asio::awaitable<void> 异步协程
+   */
   asio::awaitable<void> subscribe_tick(engine::SubscribeDataPtr data) override;
+  
  private:
+  /**
+   * @brief 处理WebSocket接收到的订单簿数据
+   * @param msg WebSocket消息
+   * @return asio::awaitable<void> 异步协程
+   */
   asio::awaitable<void> send_book(const WsMessage& msg);
+  
+  /**
+   * @brief 处理WebSocket接收到的Tick数据
+   * @param msg WebSocket消息
+   * @return asio::awaitable<void> 异步协程
+   */
   asio::awaitable<void> send_tick(const WsMessage& msg);
   
-  engine::BookPtr last_book_;
-  engine::TickDataPtr last_tick_;
+  engine::BookPtr last_book_;      ///< 最近一次接收的订单簿数据
+  engine::TickDataPtr last_tick_;  ///< 最近一次接收的Tick数据
 
-  OkxHttp http_;
-  OkxWs ws_;
+  OkxHttp http_;  ///< HTTP客户端，用于查询操作
+  OkxWs ws_;      ///< WebSocket客户端，用于接收实时数据
 };
 
 }  // namespace market::okx

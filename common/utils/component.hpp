@@ -1,6 +1,18 @@
 #ifndef __COMMON_UTILS_COMPONENT_HPP__
 #define __COMMON_UTILS_COMPONENT_HPP__
 
+/**
+ * @file component.hpp
+ * @brief 数据处理工具类
+ * 
+ * 提供了通用的数据处理功能：
+ * - DataPrinter: 数据打印工具，支持复杂结构的格式化输出
+ * - DataReader: JSON反序列化工具，将JSON转换为C++对象
+ * - DataSerializer: JSON序列化工具，将C++对象转换为JSON
+ * 
+ * 使用Boost.PFR实现编译期反射，无需手动编写序列化代码。
+ */
+
 #include <glog/logging.h>
 
 #include <boost/json.hpp>
@@ -12,13 +24,33 @@
 
 namespace Common {
 
+/// 高精度浮点数类型，100位精度
 using dec_float = boost::multiprecision::cpp_dec_float_100;
 
+/**
+ * @brief 数据打印工具类
+ * 
+ * 支持打印各种类型的数据，包括：
+ * - 基本类型（int, float, string等）
+ * - 容器类型（vector等）
+ * - 智能指针类型
+ * - 自定义结构体（通过Boost.PFR反射）
+ * 
+ * @tparam T 数据类型
+ */
 template <typename T>
 class DataPrinter {
 public:
   DataPrinter(const T& data, int depth = 1) : data_(data), depth_(depth) {}
 
+  /**
+   * @brief 打印数据到输出流
+   * @tparam U 输出流类型
+   * @param os 输出流
+   * @param data 要打印的数据
+   * @param depth 当前深度（用于嵌套结构）
+   * @return U& 输出流引用
+   */
   template<typename U>
   static U& print(U& os, const T& data, int depth = 1) {
     if constexpr (is_shared_v<T>) {
@@ -67,9 +99,25 @@ private:
   int depth_;
 };
 
+/**
+ * @brief JSON反序列化工具类
+ * 
+ * 将JSON数据转换为C++对象，支持：
+ * - 基本类型转换
+ * - 容器类型转换
+ * - 智能指针类型转换
+ * - 自定义结构体转换（通过Boost.PFR反射）
+ * 
+ * @tparam T 目标数据类型
+ */
 template <typename T>
 class DataReader {
  public:
+  /**
+   * @brief 从JSON值读取数据
+   * @param obj JSON值
+   * @return T 转换后的数据
+   */
   static T read(const boost::json::value& obj) {
     T data;
     if constexpr (is_shared_v<T>) {
@@ -182,9 +230,25 @@ class DataReader {
   }
 };
 
+/**
+ * @brief JSON序列化工具类
+ * 
+ * 将C++对象转换为JSON数据，支持：
+ * - 基本类型序列化
+ * - 容器类型序列化
+ * - 智能指针类型序列化
+ * - 自定义结构体序列化（通过Boost.PFR反射）
+ * 
+ * @tparam T 源数据类型
+ */
 template <typename T>
 class DataSerializer {
 public:
+  /**
+   * @brief 将数据序列化为JSON
+   * @param data 要序列化的数据
+   * @return boost::json::value JSON值
+   */
   static boost::json::value write(const T& data) {
     boost::json::value val;
     if constexpr (is_shared_v<T>) {
@@ -224,20 +288,41 @@ public:
   }
 };
 
+/**
+ * @brief 快捷序列化函数
+ * @tparam T 数据类型
+ * @param data 要序列化的数据
+ * @return boost::json::value JSON值
+ */
 template <typename T>
 inline boost::json::value JsonSerialize(const T& data) {
   return DataSerializer<T>()(data);
 }
 
-// typedef std::string StringEnum;
+/**
+ * @brief 字符串枚举类型
+ * 
+ * 继承自std::string，提供枚举类型的字符串表示。
+ */
 class StringEnum : public std::string {
 public:
   StringEnum() = default;
   explicit StringEnum(const std::string& str) : std::string(str) {}
+  
+  /**
+   * @brief 转换为字符串
+   * @return const std::string& 字符串引用
+   */
   const std::string& ToString() {
     return *this;
   }
 
+  /**
+   * @brief 从字符串创建枚举
+   * @tparam T 枚举类型
+   * @param str 字符串
+   * @return T 枚举值
+   */
   template<typename T>
   static T FromString(const std::string& str) {
     return T(str);

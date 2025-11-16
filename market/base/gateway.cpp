@@ -6,22 +6,29 @@ Gateway::Gateway(EnginePtr engine, const std::string& name) : _engine(engine), _
 
 Gateway::~Gateway() {}
 
+// 初始化网关，注册各类查询和订阅请求的回调函数
 asio::awaitable<void> Gateway::init() {
+  // 注册查询账户请求的回调
   _engine->register_callback<engine::QueryAccountData>(engine::EventType::kQueryAccount,
     std::bind(&Gateway::query_account, shared_from_this(), std::placeholders::_1));
   
+  // 注册查询持仓请求的回调
   _engine->register_callback<engine::QueryPositionData>(engine::EventType::kQueryPosition,
     std::bind(&Gateway::query_position, shared_from_this(), std::placeholders::_1));
   
+  // 注册查询订单请求的回调
   _engine->register_callback<engine::QueryOrderData>(engine::EventType::kQueryOrder,
     std::bind(&Gateway::query_order, shared_from_this(), std::placeholders::_1));
 
+  // 注册订阅订单簿请求的回调
   _engine->register_callback<engine::SubscribeData>(engine::EventType::kSubscribeBook,
     std::bind(&Gateway::subscribe_book, shared_from_this(), std::placeholders::_1));
   
+  // 注册订阅Tick请求的回调
   _engine->register_callback<engine::SubscribeData>(engine::EventType::kSubscribeTick,
     std::bind(&Gateway::subscribe_tick, shared_from_this(), std::placeholders::_1));
 
+  // 调用子类实现的初始化逻辑（如连接WebSocket）
   co_await market_init();
   co_return;
 }

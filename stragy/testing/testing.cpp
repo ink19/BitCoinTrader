@@ -12,12 +12,21 @@ Testing::Testing(engine::EnginePtr engine) : base::Stragy(engine) {}
 
 Testing::~Testing() {}
 
+// 策略启动后执行的主逻辑
 asio::awaitable<void> Testing::run() {
   auto executor = co_await asio::this_coro::executor;
   LOG(INFO) << fmt::format("run");
+  
+  // 查询账户信息
   co_await on_request_account();
+  
+  // 查询持仓信息
   co_await on_request_position();
+  
+  // 订阅BTC-USDT的订单簿数据
   co_await on_subscribe_book("BTC-USDT");
+  
+  // 订阅BTC-USDT的Tick数据
   co_await on_subscribe_tick("BTC-USDT");
   co_return;
 }
@@ -27,20 +36,26 @@ asio::awaitable<void> Testing::recv_account(engine::AccountDataPtr account) {
   co_return;
 }
 
+// 接收持仓数据并打印详细信息
 asio::awaitable<void> Testing::recv_position(engine::PositionDataPtr position) {
   LOG(INFO) << fmt::format("recv_position: {}", position->items.size());
+  // 遍历所有持仓，打印交易对、数量、价格和方向
   for (auto& item : position->items) {
     LOG(INFO) << fmt::format("position: {}, {} {} {}", item->symbol, item->volume.str(), item->price.str(), int(item->direction));
   }
   co_return;
 }
 
+// 接收订单簿数据并打印买卖盘信息
 asio::awaitable<void> Testing::recv_book(engine::BookPtr order) {
   LOG(INFO) << fmt::format("recv_book {}: ask {} bid {}", order->symbol, order->asks.size(), order->bids.size());
+  
+  // 打印卖盘数据（价格从低到高）
   for (auto& item : order->asks) {
     LOG(INFO) << fmt::format("book ask {} {}", item.price.str(), item.volume.str());
   }
 
+  // 打印买盘数据（价格从高到低）
   for (auto& item : order->bids) {
     LOG(INFO) << fmt::format("book bid {} {}", item.price.str(), item.volume.str());
   }

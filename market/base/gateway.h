@@ -1,6 +1,17 @@
 #ifndef __MARKET_BASE_GATEWAY_H__
 #define __MARKET_BASE_GATEWAY_H__
 
+/**
+ * @file gateway.h
+ * @brief 交易所网关基类定义
+ * 
+ * 定义了与交易所交互的通用接口，包括：
+ * - 连接管理
+ * - 行情订阅
+ * - 订单管理
+ * - 账户和持仓查询
+ */
+
 #include <memory>
 
 #include "engine.h"
@@ -10,65 +21,118 @@ namespace market::base {
 
 using namespace engine;
 
-// 通用交易网关
+/**
+ * @brief 通用交易网关基类
+ * 
+ * 所有交易所网关必须继承此类并实现相应的虚函数。
+ * 提供了与引擎交互的通用方法，如发送事件到引擎。
+ */
 class Gateway : public engine::Component, public std::enable_shared_from_this<Gateway> {
 public:
+  /**
+   * @brief 构造函数
+   * @param engine 引擎指针
+   * @param name 网关名称（如"okx"）
+   */
   Gateway(engine::EnginePtr engine, const std::string& name);
   virtual ~Gateway();
 
+  /**
+   * @brief 初始化网关，注册事件回调
+   * @return asio::awaitable<void> 异步协程
+   */
   asio::awaitable<void> init() override;
 
-  // name 返回交易网关名称
+  /**
+   * @brief 获取交易网关名称
+   * @return std::string 网关名称
+   */
   std::string name() const { return _name; }
 
-  // on_tick tick更新
+  // ========== 以下方法用于将数据发送到引擎 ==========
+  
+  /// 发送Tick数据到引擎
   asio::awaitable<void> on_tick(TickDataPtr tick);
 
-  // on_order 订单
+  /// 发送订单数据到引擎
   asio::awaitable<void> on_order(OrderDataPtr order);
 
-  // on_position 持仓更新
+  /// 发送持仓数据到引擎
   asio::awaitable<void> on_position(PositionDataPtr position);
 
-  // on_account 账户更新
+  /// 发送账户数据到引擎
   asio::awaitable<void> on_account(AccountDataPtr account);
 
-  // on_book 订单更新
+  /// 发送订单簿数据到引擎
   asio::awaitable<void> on_book(BookPtr book);
 
-  // on_trade 成交更新
+  /// 发送成交数据到引擎
   asio::awaitable<void> on_trade(TradeDataPtr trade);
 
+  // ========== 以下是子类必须实现的虚函数 ==========
+  
+  /// 连接到交易所
   virtual void connect() = 0;
+  
+  /// 关闭与交易所的连接
   virtual void close() = 0;
 
-  // 订阅行情
+  /// 订阅指定交易对的行情
   virtual void subscribe(const std::string& symbol) = 0;
+  
+  /// 取消订阅
   virtual void unsubscribe(const std::string& symbol) = 0;
 
-  // 下单
+  /// 发送订单
   virtual void send_order(OrderDataPtr order) = 0;
+  
+  /// 取消订单
   virtual void cancel_order(OrderDataPtr order) = 0;
 
-  // 查询账户
+  /**
+   * @brief 查询账户信息
+   * @param data 查询请求数据
+   * @return asio::awaitable<void> 异步协程
+   */
   virtual asio::awaitable<void> query_account(engine::QueryAccountDataPtr data) = 0;
 
-  // 查询持仓
+  /**
+   * @brief 查询持仓信息
+   * @param data 查询请求数据
+   * @return asio::awaitable<void> 异步协程
+   */
   virtual asio::awaitable<void> query_position(engine::QueryPositionDataPtr data) = 0;
 
-  // 查询历史订单
+  /**
+   * @brief 查询历史订单
+   * @param data 查询请求数据
+   * @return asio::awaitable<void> 异步协程
+   */
   virtual asio::awaitable<void> query_order(engine::QueryOrderDataPtr data) = 0;
 
-  // 订阅book
+  /**
+   * @brief 订阅订单簿数据
+   * @param data 订阅请求数据
+   * @return asio::awaitable<void> 异步协程
+   */
   virtual asio::awaitable<void> subscribe_book(engine::SubscribeDataPtr data) = 0;
 
-  // 订阅ticker
+  /**
+   * @brief 订阅Tick数据
+   * @param data 订阅请求数据
+   * @return asio::awaitable<void> 异步协程
+   */
   virtual asio::awaitable<void> subscribe_tick(engine::SubscribeDataPtr data) = 0;
 
+  /**
+   * @brief 市场网关初始化，在init()中被调用
+   * @return asio::awaitable<void> 异步协程
+   */
   virtual asio::awaitable<void> market_init() = 0;
+  
 private:
-  const std::string _name;
-  EnginePtr _engine;
+  const std::string _name;  ///< 网关名称
+  EnginePtr _engine;        ///< 引擎指针
 };
 
 }  // namespace market::base
