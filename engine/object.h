@@ -20,7 +20,7 @@ class BaseData : public std::enable_shared_from_this<BaseData> {
 enum class EventType {
   kQuit,  // 退出
 
-  kSubscribeTick,  // 添加订阅
+  kSubscribeTick,  // 添加订阅Tick
   kTick,
 
   kSubscribeBook,
@@ -89,8 +89,6 @@ class TickData : public BaseData {
   dec_float last_close_price;  // 昨收价
 
   BookPtr order_book;
-  TickDataPtr last_tick_data;
-
   const static EventType type = EventType::kTick;
 };
 

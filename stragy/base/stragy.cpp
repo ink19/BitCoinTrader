@@ -16,6 +16,9 @@ asio::awaitable<void> Stragy::init() {
 
   _engine->register_callback<engine::Book>(engine::EventType::kBook,
     std::bind(&Stragy::recv_book, shared_from_this(), std::placeholders::_1));
+
+  _engine->register_callback<engine::TickData>(engine::EventType::kTick,
+    std::bind(&Stragy::recv_tick, shared_from_this(), std::placeholders::_1));
   
   co_return;
 }
@@ -36,6 +39,12 @@ asio::awaitable<void> Stragy::on_subscribe_book(const std::string& symbol) {
   auto book = std::make_shared<engine::SubscribeData>();
   book->symbol = symbol;
   return _engine->on_event(engine::EventType::kSubscribeBook, book);
+}
+
+asio::awaitable<void> Stragy::on_subscribe_tick(const std::string& symbol) {
+  auto tick = std::make_shared<engine::SubscribeData>();
+  tick->symbol = symbol;
+  return _engine->on_event(engine::EventType::kSubscribeTick, tick);
 }
 
 }

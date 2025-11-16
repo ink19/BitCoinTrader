@@ -19,6 +19,9 @@ asio::awaitable<void> Gateway::init() {
   _engine->register_callback<engine::SubscribeData>(engine::EventType::kSubscribeBook,
     std::bind(&Gateway::subscribe_book, shared_from_this(), std::placeholders::_1));
   
+  _engine->register_callback<engine::SubscribeData>(engine::EventType::kSubscribeTick,
+    std::bind(&Gateway::subscribe_tick, shared_from_this(), std::placeholders::_1));
+
   co_await market_init();
   co_return;
 }

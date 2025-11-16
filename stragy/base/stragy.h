@@ -18,10 +18,12 @@ public:
   asio::awaitable<void> on_request_account();
   asio::awaitable<void> on_request_position();
   asio::awaitable<void> on_subscribe_book(const std::string& symbol);
+  asio::awaitable<void> on_subscribe_tick(const std::string& symbol);
 
   virtual asio::awaitable<void> recv_account(engine::AccountDataPtr account) = 0;
   virtual asio::awaitable<void> recv_position(engine::PositionDataPtr position) = 0;
   virtual asio::awaitable<void> recv_book(engine::BookPtr order) = 0;
+  virtual asio::awaitable<void> recv_tick(engine::TickDataPtr ticker) = 0;
 
 private:
   engine::EnginePtr _engine;

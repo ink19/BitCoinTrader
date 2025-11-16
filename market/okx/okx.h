@@ -43,8 +43,15 @@ class Okx : public base::Gateway {
   // 订阅book
   asio::awaitable<void> subscribe_book(engine::SubscribeDataPtr data) override;
 
-  asio::awaitable<void> send_book(const WsMessage& msg);
+  // 订阅tick
+  asio::awaitable<void> subscribe_tick(engine::SubscribeDataPtr data) override;
  private:
+  asio::awaitable<void> send_book(const WsMessage& msg);
+  asio::awaitable<void> send_tick(const WsMessage& msg);
+  
+  engine::BookPtr last_book_;
+  engine::TickDataPtr last_tick_;
+
   OkxHttp http_;
   OkxWs ws_;
 };

@@ -62,6 +62,9 @@ public:
   // 订阅book
   virtual asio::awaitable<void> subscribe_book(engine::SubscribeDataPtr data) = 0;
 
+  // 订阅ticker
+  virtual asio::awaitable<void> subscribe_tick(engine::SubscribeDataPtr data) = 0;
+
   virtual asio::awaitable<void> market_init() = 0;
 private:
   const std::string _name;

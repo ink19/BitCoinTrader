@@ -88,6 +88,8 @@ asio::awaitable<void> Okx::run() {
 
     if (msg.arg.channel == "books") {
       co_await send_book(msg);
+    } else if (msg.arg.channel == "tickers") {
+      co_await send_tick(msg);
     }
   }
 
@@ -117,7 +119,36 @@ asio::awaitable<void> Okx::send_book(const WsMessage& msg) {
       item->asks.push_back(ask_item);
     }
 
+    last_book_ = item;
     co_await on_book(item);
+  }
+
+  co_return;
+}
+
+asio::awaitable<void> Okx::send_tick(const WsMessage& msg) {
+  auto tick = std::make_shared<engine::TickData>();
+  auto tick_data = std::any_cast<std::vector<WsTick>>(msg.data);
+
+  for (auto& tick_item : tick_data) {
+    auto item = std::make_shared<engine::TickData>();
+    item->symbol = msg.arg.instId;
+    item->exchange = name();
+    item->timestamp_ms = tick_item.ts;
+
+    item->last_price = tick_item.last;
+    item->last_volume = tick_item.lastSz;
+    item->turnover = tick_item.lastSz * tick_item.last;
+
+    item->last_close_price = tick_item.open24h;
+    item->open_price = tick_item.open24h;
+    item->high_price = tick_item.high24h;
+    item->low_price = tick_item.low24h;
+    
+    item->order_book = last_book_;
+    last_tick_ = item;
+
+    co_await on_tick(item);
   }
 
   co_return;
@@ -127,6 +158,15 @@ asio::awaitable<void> Okx::subscribe_book(engine::SubscribeDataPtr data) {
   auto sub_req = WsSubscibeRequest();
   sub_req.op = "subscribe";
   sub_req.args = {{"books", data->symbol}};
+
+  co_await ws_.write(sub_req);
+  co_return;
+}
+
+asio::awaitable<void> Okx::subscribe_tick(engine::SubscribeDataPtr data) {
+  auto sub_req = WsSubscibeRequest();
+  sub_req.op = "subscribe";
+  sub_req.args = {{"tickers", data->symbol}};
 
   co_await ws_.write(sub_req);
   co_return;

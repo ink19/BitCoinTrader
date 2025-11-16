@@ -18,6 +18,7 @@ asio::awaitable<void> Testing::run() {
   co_await on_request_account();
   co_await on_request_position();
   co_await on_subscribe_book("BTC-USDT");
+  co_await on_subscribe_tick("BTC-USDT");
   co_return;
 }
 
@@ -43,6 +44,11 @@ asio::awaitable<void> Testing::recv_book(engine::BookPtr order) {
   for (auto& item : order->bids) {
     LOG(INFO) << fmt::format("book bid {} {}", item.price.str(), item.volume.str());
   }
+  co_return;
+}
+
+asio::awaitable<void> Testing::recv_tick(engine::TickDataPtr ticker) {
+  LOG(INFO) << fmt::format("recv_tick: {}", ticker->symbol);
   co_return;
 }
 

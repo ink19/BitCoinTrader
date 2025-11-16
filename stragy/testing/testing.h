@@ -17,6 +17,7 @@ public:
   asio::awaitable<void> recv_account(engine::AccountDataPtr account) override;
   asio::awaitable<void> recv_position(engine::PositionDataPtr position) override;
   asio::awaitable<void> recv_book(engine::BookPtr order) override;
+  asio::awaitable<void> recv_tick(engine::TickDataPtr ticker) override;
 };
 
 }  // namespace testing

@@ -138,7 +138,8 @@ struct WsTick {
   dec_float vol24h;
   dec_float sodUtc0;
   dec_float sodUtc8;
-  dec_float ts;
+  
+  int64_t ts;
 };
 
 struct WsBookItem {
