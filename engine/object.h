@@ -47,7 +47,7 @@ enum class EventType {
   kSubscribeBook,    ///< 订阅订单簿请求
   kBook,             ///< 订单簿数据事件
 
-  kSendTrade,        ///< 发送交易请求
+  kSendOrder,        ///< 发送订单请求
   kQueryOrder,       ///< 查询订单请求
   kOrder,            ///< 订单数据事件
 

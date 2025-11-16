@@ -49,17 +49,16 @@ class Okx : public base::Gateway {
    */
   virtual asio::awaitable<void> market_init() override;
 
-  /// 订阅行情（当前未实现）
-  void subscribe(const std::string& symbol) override{};
-  
   /// 取消订阅（当前未实现）
   void unsubscribe(const std::string& symbol) override{};
 
   /// 发送订单（当前未实现）
-  void send_order(engine::OrderDataPtr order) override{};
+  asio::awaitable<void> send_orders(engine::OrderDataPtr order) override;
   
   /// 取消订单（当前未实现）
-  void cancel_order(engine::OrderDataPtr order) override{};
+  asio::awaitable<void> cancel_order(engine::OrderDataPtr order) override{
+    co_return;
+  };
 
   /**
    * @brief 查询账户信息，通过HTTP API获取

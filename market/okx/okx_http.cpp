@@ -16,6 +16,9 @@ asio::awaitable<std::string> OkxHttpRequest::request(
   cpphttp::HttpRequest request(baseUrl_ + request_path, method, body);
   auto headers = get_headers(method, request_path, body);
   request.set_header(headers);
+  if (method == "POST") {
+    request.set_body("application/json", body);
+  }
   
   auto resp = co_await request.request();
 
@@ -74,13 +77,26 @@ asio::awaitable<std::vector<PositionDetail>> OkxHttp::get_positions(){
   co_return position_rsp->data;
 }
 
-asio::awaitable<std::vector<OrderDetail>> OkxHttp::get_orders(){
+asio::awaitable<std::vector<QueryOrderDetail>> OkxHttp::get_orders(){
   auto resp = co_await request_->request("GET", "/api/v5/trade/orders-pending", "");
   LOG(INFO) << "get orders response: " << resp;
-  auto order_rsp = jsoncpp::from_json<OrderRespone>(resp);
+  auto order_rsp = jsoncpp::from_json<QueryOrderRespone>(resp);
   if (order_rsp->code != 0) {
     LOG(ERROR) << "get orders failed, code: " << order_rsp->code << ", msg: " << order_rsp->msg;
     throw std::runtime_error(fmt::format("get orders failed, code: {}, msg: {}", order_rsp->code, order_rsp->msg));
+  }
+
+  co_return order_rsp->data;
+}
+
+asio::awaitable<std::vector<SendOrderRspDetail>> OkxHttp::send_orders(const std::vector<SendOrderRequest>& request){
+  LOG(INFO) << "send orders: " << jsoncpp::to_json(request);
+  auto resp = co_await request_->request(
+    "POST", "/api/v5/trade/batch-orders", jsoncpp::to_json(request));
+  auto order_rsp = jsoncpp::from_json<SendOrderRespone>(resp);
+  if (order_rsp->code != 0 && order_rsp->code != 1 && order_rsp->code != 2) {
+    LOG(ERROR) << "send order failed, code: " << order_rsp->code << ", msg: " << order_rsp->msg;
+    throw std::runtime_error(fmt::format("send order failed, code: {}, msg: {}", order_rsp->code, order_rsp->msg));
   }
 
   co_return order_rsp->data;

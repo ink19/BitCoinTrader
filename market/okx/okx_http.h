@@ -34,7 +34,9 @@ class OkxHttp {
 
   asio::awaitable<Account> get_account();
   asio::awaitable<std::vector<PositionDetail>> get_positions();
-  asio::awaitable<std::vector<OrderDetail>> get_orders();
+  asio::awaitable<std::vector<QueryOrderDetail>> get_orders();
+  asio::awaitable<std::vector<SendOrderRspDetail>> send_orders(const std::vector<SendOrderRequest>& request);
+  
  private:
   OkxHttpRequestPtr request_;
   

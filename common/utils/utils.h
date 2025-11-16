@@ -51,6 +51,11 @@ struct transform<dec_float> {
             throw std::runtime_error("invalid type");
         }
     }
+
+    static bj::value to_json(const dec_float &t) {
+        bj::value obj = t.str().c_str();
+        return obj;
+    }
 };
 }
 

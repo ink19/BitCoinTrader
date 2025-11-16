@@ -71,6 +71,13 @@ public:
   asio::awaitable<void> on_subscribe_tick(const std::string& symbol);
 
   /**
+   * @brief 发送订单
+   * @param order 订单数据
+   * @return asio::awaitable<void> 异步协程
+   */
+  asio::awaitable<void> on_send_order(engine::OrderDataPtr order);
+
+  /**
    * @brief 接收账户数据回调（纯虚函数，子类必须实现）
    * @param account 账户数据
    * @return asio::awaitable<void> 异步协程

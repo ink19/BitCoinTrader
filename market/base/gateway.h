@@ -77,17 +77,14 @@ public:
   /// 关闭与交易所的连接
   virtual void close() = 0;
 
-  /// 订阅指定交易对的行情
-  virtual void subscribe(const std::string& symbol) = 0;
-  
   /// 取消订阅
   virtual void unsubscribe(const std::string& symbol) = 0;
 
   /// 发送订单
-  virtual void send_order(OrderDataPtr order) = 0;
+  virtual asio::awaitable<void> send_orders(OrderDataPtr order) = 0;
   
   /// 取消订单
-  virtual void cancel_order(OrderDataPtr order) = 0;
+  virtual asio::awaitable<void> cancel_order(OrderDataPtr order) = 0;
 
   /**
    * @brief 查询账户信息

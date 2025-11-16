@@ -28,6 +28,15 @@ asio::awaitable<void> Testing::run() {
   
   // 订阅BTC-USDT的Tick数据
   co_await on_subscribe_tick("BTC-USDT");
+  
+  auto order = std::make_shared<engine::OrderData>();
+  auto order_item = std::make_shared<engine::OrderDataItem>();
+  order_item->symbol = "BTC-USDT";
+  order_item->direction = engine::Direction::BUY;
+  order_item->price = 10000;
+  order_item->volume = dec_float("0.0001");
+  order->items.push_back(order_item);
+  co_await on_send_order(order);
   co_return;
 }
 
@@ -49,16 +58,7 @@ asio::awaitable<void> Testing::recv_position(engine::PositionDataPtr position) {
 // 接收订单簿数据并打印买卖盘信息
 asio::awaitable<void> Testing::recv_book(engine::BookPtr order) {
   LOG(INFO) << fmt::format("recv_book {}: ask {} bid {}", order->symbol, order->asks.size(), order->bids.size());
-  
-  // 打印卖盘数据（价格从低到高）
-  for (auto& item : order->asks) {
-    LOG(INFO) << fmt::format("book ask {} {}", item.price.str(), item.volume.str());
-  }
 
-  // 打印买盘数据（价格从高到低）
-  for (auto& item : order->bids) {
-    LOG(INFO) << fmt::format("book bid {} {}", item.price.str(), item.volume.str());
-  }
   co_return;
 }
 

@@ -28,6 +28,10 @@ asio::awaitable<void> Gateway::init() {
   _engine->register_callback<engine::SubscribeData>(engine::EventType::kSubscribeTick,
     std::bind(&Gateway::subscribe_tick, shared_from_this(), std::placeholders::_1));
 
+  // 注册发送订单请求的回调
+  _engine->register_callback<engine::OrderData>(engine::EventType::kSendOrder,
+    std::bind(&Gateway::send_orders, shared_from_this(), std::placeholders::_1));
+  
   // 调用子类实现的初始化逻辑（如连接WebSocket）
   co_await market_init();
   co_return;

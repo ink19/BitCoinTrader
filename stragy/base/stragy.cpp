@@ -54,4 +54,9 @@ asio::awaitable<void> Stragy::on_subscribe_tick(const std::string& symbol) {
   return _engine->on_event(engine::EventType::kSubscribeTick, tick);
 }
 
+// 发送订单
+asio::awaitable<void> Stragy::on_send_order(engine::OrderDataPtr order) {
+  return _engine->on_event(engine::EventType::kSendOrder, order);
+}
+
 }

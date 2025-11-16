@@ -219,4 +219,30 @@ asio::awaitable<void> Okx::market_init() {
   co_return;
 }
 
+// 发送订单
+asio::awaitable<void> Okx::send_orders(engine::OrderDataPtr order) {
+  auto order_req = std::vector<SendOrderRequest>();
+  for (auto &item : order->items) {
+    auto req = SendOrderRequest();
+    req.instId = item->symbol;
+    req.side = item->direction == engine::Direction::BUY ? "buy" : "sell";
+    req.ordType = "limit";
+    req.tdMode = "cash";
+    req.px = item->price;
+    req.sz = item->volume;
+
+    order_req.push_back(req);
+  }
+
+  auto rsp = co_await http_.send_orders(order_req);
+
+  for (auto &item : rsp) {
+    if (item.sCode != 0) {
+      LOG(ERROR) << "send order failed, code: " << item.sCode << ", msg: " << item.sMsg;
+    }
+  }
+
+  co_return;
+}
+
 };  // namespace market::okx

@@ -73,7 +73,7 @@ struct PositionDetail {
 
 typedef Respone<std::vector<PositionDetail>> PositionRespone;
 
-struct OrderDetail {
+struct QueryOrderDetail {
   uint64_t uTime;
   std::string instId;
   std::string ordId;
@@ -86,7 +86,33 @@ struct OrderDetail {
   std::string state;    // 订单状态
 };
 
-typedef Respone<std::vector<OrderDetail>> OrderRespone;
+typedef Respone<std::vector<QueryOrderDetail>> QueryOrderRespone;
+
+struct SendOrderRequest {
+  std::string instId;
+  std::string tdMode;
+  std::string ccy;
+  std::string clOrdId;
+  std::string tag;
+  std::string side;
+  std::string posSide;
+  std::string ordType;
+  
+  dec_float sz;
+  dec_float px;
+};
+
+struct SendOrderRspDetail {
+  std::string instId;
+  std::string ordId;
+  std::string clOrdId;
+  std::string tag;
+  int64_t ts;
+  int sCode;
+  std::string sMsg;
+};
+
+typedef Respone<std::vector<SendOrderRspDetail>> SendOrderRespone;
 
 template <typename T>
 struct WsRequest {
