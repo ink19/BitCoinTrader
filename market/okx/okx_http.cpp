@@ -7,8 +7,8 @@
 
 namespace market::okx {
 
-OkxHttpRequest::OkxHttpRequest(const std::string& api_key, const std::string& secret_key, const std::string& passphrase)
-  : api_key(api_key), secret_key(secret_key), passphrase(passphrase) {}
+OkxHttpRequest::OkxHttpRequest()
+  : api_key(okx_config->api_key()), secret_key(okx_config->secret_key()), passphrase(okx_config->passphrase()), sim(okx_config->sim()) {}
 
 asio::awaitable<std::string> OkxHttpRequest::request(
   const std::string& method, const std::string& request_path, const std::string& body){
@@ -39,14 +39,10 @@ std::map<std::string, std::string> OkxHttpRequest::get_headers(
   return headers;
 }
 
-void OkxHttpRequest::set_sim(bool sim) {
-  this->sim = sim;
-}
-
-OkxHttp::OkxHttp(const std::string& api_key, const std::string& secret_key, const std::string& passphrase)
-  : request_(std::make_shared<OkxHttpRequest>(api_key, secret_key, passphrase))
+OkxHttp::OkxHttp()
+  : request_(std::make_shared<OkxHttpRequest>())
 {
-  request_->set_sim(true);
+  
 }
 
 asio::awaitable<Account> OkxHttp::get_account(){
@@ -69,7 +65,6 @@ asio::awaitable<Account> OkxHttp::get_account(){
 
 asio::awaitable<std::vector<PositionDetail>> OkxHttp::get_positions(){
   auto resp = co_await request_->request("GET", "/api/v5/account/positions", "");
-  LOG(INFO) << "get positions response: " << resp;
   auto position_rsp = jsoncpp::from_json<PositionRespone>(resp);
   if (position_rsp->code != 0) {
     LOG(ERROR) << "get positions failed, code: " << position_rsp->code << ", msg: " << position_rsp->msg;

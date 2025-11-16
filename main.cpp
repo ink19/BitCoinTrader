@@ -15,22 +15,26 @@
 #include "okx/okx.h"
 
 int main(int argc, char* argv[]) {
-  AppOptions(argc, argv);
+  (*AppOptions)(argc, argv);
 
   google::InitGoogleLogging(argv[0]);
   FLAGS_minloglevel = google::INFO;
   FLAGS_logtostderr = true;
 
-  LOG(INFO) << "CONFIG FILE: " << AppOptions.config_file();
-  AppConfig.init(AppOptions.config_file());
+  LOG(INFO) << "CONFIG FILE: " << AppOptions->config_file();
+  AppConfig->init(AppOptions->config_file());
+  AppConfig->load_config({
+    okx_config,
+    wework_config,
+    common_config,
+  });
 
   boost::asio::io_context io_context;
   auto engine = std::make_shared<engine::Engine>(io_context);
 
-  auto wework = std::make_shared<notice::wework::WeworkNotice>(engine, AppConfig.wework()->key());
+  auto wework = std::make_shared<notice::wework::WeworkNotice>(engine);
   auto testing = std::make_shared<stragy::testing::Testing>(engine);
-  auto okx = std::make_shared<market::okx::Okx>(engine,
-    AppConfig.okx()->api_key(), AppConfig.okx()->secret_key(), AppConfig.okx()->passphrase());
+  auto okx = std::make_shared<market::okx::Okx>(engine);
 
   engine->register_component(wework);
   engine->register_component(testing);

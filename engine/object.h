@@ -22,10 +22,14 @@ enum class EventType {
 
   kSubscribeTick,  // 添加订阅
   kTick,
-  kOrderBook,
+
+  kSubscribeBook,
+  kBook,
 
   kSendTrade,
   kQueryOrder,
+  kOrder,
+
   kTrade,
 
   kQueryPosition,
@@ -41,40 +45,39 @@ enum class EventType {
 
 class Event : public std::enable_shared_from_this<Event> {
  public:
-  Event(EventType type, std::shared_ptr<BaseData> data) {
+  Event(EventType type, std::shared_ptr<const BaseData> data) {
     this->type = type;
     this->data = data;
   }
   EventType type;
-  std::shared_ptr<BaseData> data;
+  std::shared_ptr<const BaseData> data;
 };
 
-typedef std::shared_ptr<Event> EventPtr;
+typedef std::shared_ptr<const Event> EventPtr;
 
 class TickData;
-typedef std::shared_ptr<TickData> TickDataPtr;
+typedef std::shared_ptr<const TickData> TickDataPtr;
 
 // 订单簿项
-class OrderBookItem : public BaseData {
+class BookItem : public BaseData {
  public:
-  const dec_float price;
-  const dec_float volume;
+  dec_float price;
+  dec_float volume;
 };
-
-typedef std::shared_ptr<OrderBookItem> OrderBookItemPtr;
 
 // 订单簿
-class OrderBook : public BaseData {
+class Book : public BaseData {
  public:
-  std::vector<OrderBookItemPtr> bids;
-  std::vector<OrderBookItemPtr> asks;
-  const static EventType type = EventType::kOrderBook;
+  std::vector<BookItem> bids;
+  std::vector<BookItem> asks;
+  
+  const static EventType type = EventType::kBook;
 };
 
-typedef std::shared_ptr<OrderBook> OrderBookPtr;
+typedef std::shared_ptr<const Book> BookPtr;
 
-// 市场数据
-class MarketData : public BaseData {
+// Tick数据
+class TickData : public BaseData {
  public:
   dec_float last_price;   // 最新价
   dec_float last_volume;  // 成交量
@@ -85,18 +88,8 @@ class MarketData : public BaseData {
   dec_float low_price;         // 最低价
   dec_float last_close_price;  // 昨收价
 
-  OrderBookPtr order_book;
+  BookPtr order_book;
   TickDataPtr last_tick_data;
-};
-
-typedef std::shared_ptr<MarketData> MarketDataPtr;
-
-// Tick数据
-class TickData : public BaseData {
- public:
-  dec_float price;            // 成交价
-  dec_float volume;           // 成交量
-  MarketDataPtr market_data;  // 市场数据
 
   const static EventType type = EventType::kTick;
 };
@@ -136,14 +129,14 @@ class OrderDataItem : public BaseData {
   OrderStatus status;       // 订单状态
 };
 
-typedef std::shared_ptr<OrderDataItem> OrderDataItemPtr;
+typedef std::shared_ptr<const OrderDataItem> OrderDataItemPtr;
 
 class OrderData : public BaseData {
  public:
   std::vector<OrderDataItemPtr> items;
 };
 
-typedef std::shared_ptr<OrderData> OrderDataPtr;
+typedef std::shared_ptr<const OrderData> OrderDataPtr;
 
 class TradeData : public BaseData {
  public:
@@ -157,7 +150,7 @@ class TradeData : public BaseData {
   const static EventType type = EventType::kTrade;
 };
 
-typedef std::shared_ptr<TradeData> TradeDataPtr;
+typedef std::shared_ptr<const TradeData> TradeDataPtr;
 
 // 持仓数据
 class PositionItem {
@@ -172,7 +165,7 @@ class PositionItem {
   const static EventType type = EventType::kPosition;
 };
 
-typedef std::shared_ptr<PositionItem> PositionItemPtr;
+typedef std::shared_ptr<const PositionItem> PositionItemPtr;
 
 class PositionData : public BaseData {
  public:
@@ -181,7 +174,7 @@ class PositionData : public BaseData {
   const static EventType type = EventType::kPosition;
 };
 
-typedef std::shared_ptr<PositionData> PositionDataPtr;
+typedef std::shared_ptr<const PositionData> PositionDataPtr;
 
 class BalanceItem {
  public:
@@ -191,7 +184,7 @@ class BalanceItem {
 
 };
 
-typedef std::shared_ptr<BalanceItem> BalanceItemPtr;
+typedef std::shared_ptr<const BalanceItem> BalanceItemPtr;
 
 class AccountData : public BaseData {
  public:
@@ -205,28 +198,28 @@ class AccountData : public BaseData {
   const static EventType type = EventType::kAccount;
 };
 
-typedef std::shared_ptr<AccountData> AccountDataPtr;
+typedef std::shared_ptr<const AccountData> AccountDataPtr;
 
 class QueryAccountData : public BaseData {
  public:
   const static EventType type = EventType::kQueryAccount;
 };
 
-typedef std::shared_ptr<QueryAccountData> QueryAccountDataPtr;
+typedef std::shared_ptr<const QueryAccountData> QueryAccountDataPtr;
 
 class QueryPositionData : public BaseData {
  public:
   const static EventType type = EventType::kQueryPosition;
 };
 
-typedef std::shared_ptr<QueryPositionData> QueryPositionDataPtr;
+typedef std::shared_ptr<const QueryPositionData> QueryPositionDataPtr;
 
 class QueryOrderData : public BaseData {
  public:
   const static EventType type = EventType::kQueryOrder;
 };
 
-typedef std::shared_ptr<QueryOrderData> QueryOrderDataPtr;
+typedef std::shared_ptr<const QueryOrderData> QueryOrderDataPtr;
 
 class MessageData : public BaseData {
  public:
@@ -236,7 +229,15 @@ class MessageData : public BaseData {
   const static EventType type = EventType::kMessage;
 };
 
-typedef std::shared_ptr<MessageData> MessageDataPtr;
+typedef std::shared_ptr<const MessageData> MessageDataPtr;
+
+class SubscribeData : public BaseData {
+ public:
+
+  const static EventType type = EventType::kSubscribeBook;
+};
+
+typedef std::shared_ptr<const SubscribeData> SubscribeDataPtr;
 
 }  // namespace engine
 

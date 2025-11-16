@@ -7,12 +7,17 @@ Stragy::Stragy(engine::EnginePtr engine) : _engine(engine) {
 
 Stragy::~Stragy() {}
 
-void Stragy::init() {
+asio::awaitable<void> Stragy::init() {
   _engine->register_callback<engine::AccountData>(engine::EventType::kAccount,
     std::bind(&Stragy::recv_account, shared_from_this(), std::placeholders::_1));
 
   _engine->register_callback<engine::PositionData>(engine::EventType::kPosition,
     std::bind(&Stragy::recv_position, shared_from_this(), std::placeholders::_1));
+
+  _engine->register_callback<engine::Book>(engine::EventType::kBook,
+    std::bind(&Stragy::recv_book, shared_from_this(), std::placeholders::_1));
+  
+  co_return;
 }
 
 asio::awaitable<void> Stragy::on_message(engine::MessageDataPtr msg) {
@@ -25,6 +30,12 @@ asio::awaitable<void> Stragy::on_request_account() {
 
 asio::awaitable<void> Stragy::on_request_position() {
   return _engine->on_event(engine::EventType::kQueryPosition, std::make_shared<engine::QueryPositionData>());
+}
+
+asio::awaitable<void> Stragy::on_subscribe_book(const std::string& symbol) {
+  auto book = std::make_shared<engine::SubscribeData>();
+  book->symbol = symbol;
+  return _engine->on_event(engine::EventType::kSubscribeBook, book);
 }
 
 }

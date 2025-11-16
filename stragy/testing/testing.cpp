@@ -17,6 +17,7 @@ asio::awaitable<void> Testing::run() {
   LOG(INFO) << fmt::format("run");
   co_await on_request_account();
   co_await on_request_position();
+  co_await on_subscribe_book("BTC-USDT");
   co_return;
 }
 
@@ -29,6 +30,18 @@ asio::awaitable<void> Testing::recv_position(engine::PositionDataPtr position) {
   LOG(INFO) << fmt::format("recv_position: {}", position->items.size());
   for (auto& item : position->items) {
     LOG(INFO) << fmt::format("position: {}, {} {} {}", item->symbol, item->volume.str(), item->price.str(), int(item->direction));
+  }
+  co_return;
+}
+
+asio::awaitable<void> Testing::recv_book(engine::BookPtr order) {
+  LOG(INFO) << fmt::format("recv_book {}: ask {} bid {}", order->symbol, order->asks.size(), order->bids.size());
+  for (auto& item : order->asks) {
+    LOG(INFO) << fmt::format("book ask {} {}", item.price.str(), item.volume.str());
+  }
+
+  for (auto& item : order->bids) {
+    LOG(INFO) << fmt::format("book bid {} {}", item.price.str(), item.volume.str());
   }
   co_return;
 }

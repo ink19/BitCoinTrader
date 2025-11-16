@@ -50,10 +50,8 @@ private:
   po::variables_map m_vm;
 };
 
-using Options = Common::Singleton<OptionsImpl>;
-
 }
 
-#define AppOptions Config::Options::getInstance()
+#define AppOptions Common::SingletonPtr<Config::OptionsImpl>::get_instance()
 
 #endif

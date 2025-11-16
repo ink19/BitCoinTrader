@@ -7,8 +7,8 @@
 
 namespace notice::wework {
 
-WeworkNotice::WeworkNotice(engine::EnginePtr engine, std::string key) : 
-  notice::base::Notice(engine), m_key(key), m_uri(m_base_uri + key) {}
+WeworkNotice::WeworkNotice(engine::EnginePtr engine) : 
+  notice::base::Notice(engine), m_key(wework_config->key()), m_uri(m_base_uri + wework_config->key()) {}
 
 asio::awaitable<void> WeworkNotice::send_message(engine::MessageDataPtr msg) {
   auto send_obj = WeworkData();

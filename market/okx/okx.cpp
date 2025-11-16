@@ -1,17 +1,13 @@
 #include "okx.h"
-#include "config/config.h"
 
 namespace market::okx {
 
-Okx::Okx(engine::EnginePtr engine, std::string api_key, std::string secret_key, std::string passphrase)
-    : base::Gateway(engine, "okx"), http_(api_key, secret_key, passphrase)
-{
-  
-}
+Okx::Okx(engine::EnginePtr engine)
+    : base::Gateway(engine, "okx"), http_() {}
 
 asio::awaitable<void> Okx::query_account(engine::QueryAccountDataPtr data) {
   auto account = co_await http_.get_account();
-  
+
   auto account_data = std::make_shared<engine::AccountData>();
   account_data->balance = account.totalEq;
   account_data->exchange = name();
@@ -79,6 +75,66 @@ asio::awaitable<void> Okx::query_order(engine::QueryOrderDataPtr data) {
 }
 
 asio::awaitable<void> Okx::run() {
+  for (;;) {
+    auto msg = co_await ws_.read();
+
+    if (msg.event == "error") {
+      LOG(ERROR) << fmt::format("ws error code: {}, message: {}", msg.code, msg.msg);
+      continue;
+    } else if (!msg.event.empty()) {
+      LOG(INFO) << fmt::format("ws event: {}", msg.event);
+      continue;
+    }
+
+    if (msg.arg.channel == "books") {
+      co_await send_book(msg);
+    }
+  }
+
+  co_return;
+}
+
+asio::awaitable<void> Okx::send_book(const WsMessage& msg) {
+  auto book = std::make_shared<engine::Book>();
+  auto book_data = std::any_cast<std::vector<WsBook>>(msg.data);
+
+  for (auto& book_item : book_data) {
+    auto item = std::make_shared<engine::Book>();
+    item->symbol = msg.arg.instId;
+    item->exchange = name();
+    item->timestamp_ms = book_item.ts;
+    for (auto& bid : book_item.bids) {
+      auto bid_item = engine::BookItem();
+      bid_item.price = bid.price;
+      bid_item.volume = bid.size;
+      item->bids.push_back(bid_item);
+    }
+
+    for (auto& ask : book_item.asks) {
+      auto ask_item = engine::BookItem();
+      ask_item.price = ask.price;
+      ask_item.volume = ask.size;
+      item->asks.push_back(ask_item);
+    }
+
+    co_await on_book(item);
+  }
+
+  co_return;
+}
+
+asio::awaitable<void> Okx::subscribe_book(engine::SubscribeDataPtr data) {
+  auto sub_req = WsSubscibeRequest();
+  sub_req.op = "subscribe";
+  sub_req.args = {{"books", data->symbol}};
+
+  co_await ws_.write(sub_req);
+  co_return;
+}
+
+asio::awaitable<void> Okx::market_init() {
+  co_await ws_.connect();
+  LOG(INFO) << "ws connected";
   co_return;
 }
 

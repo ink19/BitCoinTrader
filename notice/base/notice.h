@@ -9,7 +9,7 @@ namespace notice::base {
 class Notice : public std::enable_shared_from_this<Notice>, public engine::Component{
 public:
   Notice(engine::EnginePtr engine);
-  void init() override;
+  asio::awaitable<void> init() override;
 
   virtual asio::awaitable<void> send_message(engine::MessageDataPtr msg) = 0;
 private:

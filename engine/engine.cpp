@@ -3,23 +3,30 @@
 
 namespace engine {
 
-Engine::Engine(asio::io_context& ctx) : channel_(ctx, 10) {}
+Engine::Engine(asio::io_context& ctx) : channel_(ctx, 1000) {}
 
 Engine::~Engine() {}
 
-asio::awaitable<void> Engine::push_event(EventPtr event) {
-  co_await channel_.async_send(boost::system::error_code(), event, asio::use_awaitable);
-}
-
-asio::awaitable<void> Engine::on_event(EventType etype, std::shared_ptr<BaseData> event) {
+asio::awaitable<void> Engine::on_event(EventType etype, std::shared_ptr<const BaseData> event) {
   co_await channel_.async_send(boost::system::error_code(), std::make_shared<Event>(etype, event), asio::use_awaitable);
 }
 
 asio::awaitable<void> Engine::run() {
   for (auto& component : components_) {
+    co_await component->init();
+  }
+
+  for (auto& component : components_) {
     asio::co_spawn(co_await asio::this_coro::executor, [component]() -> asio::awaitable<void> {
-      component->init();
-      co_await component->run();
+      try {
+        co_await component->run();
+      } catch (boost::system::system_error &e) {
+        LOG(ERROR) << fmt::format("Component run error: {}", e.what());
+      } catch (std::runtime_error &e) {
+        LOG(ERROR) << fmt::format("Component run error: {}", e.what());
+      } catch (...) {
+        LOG(ERROR) << fmt::format("Component run error: unknown error");
+      }
     }, asio::detached);
   }
 
@@ -31,7 +38,7 @@ asio::awaitable<void> Engine::run() {
       auto event = co_await channel_.async_receive(asio::use_awaitable);
       auto& callbacks = callbacks_[event->type];
       for (auto& callback : callbacks) {
-        asio::co_spawn(executor, [&]() -> asio::awaitable<void> {
+        asio::co_spawn(executor, [callback, event]() -> asio::awaitable<void> {
           try {
             co_await callback(event);
           } catch (boost::system::system_error &e) {

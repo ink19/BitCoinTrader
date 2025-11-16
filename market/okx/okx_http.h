@@ -11,11 +11,10 @@ namespace market::okx {
 
 class OkxHttpRequest {
  public:
-  OkxHttpRequest(const std::string& api_key, const std::string& secret_key, const std::string& passphrase);
+  OkxHttpRequest();
 
   asio::awaitable<std::string> request(const std::string& method, const std::string& request_path,
                       const std::string& body);
-  void set_sim(bool sim);
  private:
   std::map<std::string, std::string> get_headers(const std::string& method, const std::string& request_path,
                       const std::string& body);
@@ -30,7 +29,7 @@ typedef std::shared_ptr<OkxHttpRequest> OkxHttpRequestPtr;
 
 class OkxHttp {
  public:
-  OkxHttp(const std::string& api_key, const std::string& secret_key, const std::string& passphrase);
+  OkxHttp();
   ~OkxHttp() {}
 
   asio::awaitable<Account> get_account();
