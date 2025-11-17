@@ -65,8 +65,16 @@ asio::awaitable<void> Engine::run() {
       // 处理注册了kAll类型的回调，这些回调会接收所有类型的事件
       auto& all_callbacks = callbacks_[EventType::kAll];
       for (auto& callback : all_callbacks) {
-        asio::co_spawn(executor, [&]() -> asio::awaitable<void> {
-          co_await callback(event);
+        asio::co_spawn(executor, [callback, event]() -> asio::awaitable<void> {
+          try {
+            co_await callback(event);
+          } catch (boost::system::system_error &e) {
+            LOG(ERROR) << fmt::format("Type {} callback error: {}", int(event->type), e.what());
+          } catch (std::runtime_error &e) {
+            LOG(ERROR) << fmt::format("Type {} callback error: {}", int(event->type), e.what());
+          } catch (...) {
+            LOG(ERROR) << fmt::format("Type {} callback error: unknown error", int(event->type)); 
+          }
         }, asio::detached);
       }
     } catch (...) {
