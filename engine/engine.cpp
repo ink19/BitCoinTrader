@@ -4,7 +4,7 @@
 namespace engine {
 
 // 初始化引擎，创建容量为1000的并发事件通道
-Engine::Engine(asio::io_context& ctx) : channel_(ctx, 1000) {}
+Engine::Engine(asio::io_context& ctx, size_t channel_size) : channel_(ctx, channel_size) {}
 
 Engine::~Engine() {}
 

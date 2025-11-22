@@ -6,9 +6,9 @@
 
 using namespace std::chrono_literals;
 
-namespace stragy::testing {
+namespace strategy::testing {
 
-Testing::Testing(engine::EnginePtr engine) : base::Stragy(engine) {}
+Testing::Testing(engine::EnginePtr engine) : base::Strategy(engine) {}
 
 Testing::~Testing() {}
 

@@ -1,8 +1,8 @@
-#ifndef __STRAGY_BASE_STRAGY_H__
-#define __STRAGY_BASE_STRAGY_H__
+#ifndef __STRATEGY_BASE_STRATEGY_H__
+#define __STRATEGY_BASE_STRATEGY_H__
 
 /**
- * @file stragy.h
+ * @file strategy.h
  * @brief 交易策略基类定义
  * 
  * 提供了策略的基础框架，包括：
@@ -13,7 +13,7 @@
 #include "utils/utils.h"
 #include "engine.h"
 
-namespace stragy {
+namespace strategy {
 namespace base {
 
 /**
@@ -22,14 +22,14 @@ namespace base {
  * 所有交易策略必须继承此类并实现相应的事件处理方法。
  * 基类提供了与引擎交互的通用方法，如订阅行情、查询账户等。
  */
-class Stragy : public std::enable_shared_from_this<Stragy>, public engine::Component {
+class Strategy : public std::enable_shared_from_this<Strategy>, public engine::Component {
 public:
   /**
    * @brief 构造函数
    * @param engine 引擎指针，用于与系统其他组件交互
    */
-  Stragy(engine::EnginePtr engine);
-  ~Stragy();
+  Strategy(engine::EnginePtr engine);
+  ~Strategy();
 
   /**
    * @brief 初始化策略，注册事件回调函数
@@ -110,6 +110,6 @@ private:
 };
 
 }  // namespace base
-}  // namespace stragy
+}  // namespace strategy
 
-#endif  // __STRAGY_BASE_STRAGY_H__
+#endif  // __STRATEGY_BASE_STRATEGY_H__

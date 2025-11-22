@@ -13,9 +13,9 @@
  */
 
 #include <string>
-#include "base/stragy.h"
+#include "base/strategy.h"
 
-namespace stragy {
+namespace strategy {
 namespace testing {
 
 /**
@@ -23,7 +23,7 @@ namespace testing {
  * 
  * 继承自策略基类，实现了基本的数据接收和打印功能。
  */
-class Testing : public base::Stragy {
+class Testing : public base::Strategy {
 public:
   Testing(engine::EnginePtr engine);
   ~Testing();

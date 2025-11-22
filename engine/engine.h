@@ -51,7 +51,7 @@ public:
    * @brief 构造函数
    * @param ctx Boost.Asio IO上下文，用于处理异步操作
    */
-  Engine(asio::io_context& ctx);
+  Engine(asio::io_context& ctx, size_t channel_size = 1000);
   ~Engine();
 
   /**
